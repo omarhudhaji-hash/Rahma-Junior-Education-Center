@@ -1,0 +1,29 @@
+import * as React from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { requirePortalRoles } from "@/lib/permissions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Card,CardContent,CardHeader,CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PageHeader,EmptyState } from "@/components/portal/page-header";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { fullName,roleLabels } from "@/lib/school";
+
+export const Route=createFileRoute("/_authenticated/portal/staff")({beforeLoad:async()=>{await requirePortalRoles(["admin","headteacher"]);},component:StaffPage});
+
+const emptyForm={first_name:"",last_name:"",email:"",phone:"",employee_no:"",subject:"",hire_date:"",password:""};
+
+function StaffPage(){
+ const [q,setQ]=React.useState(""); const qc=useQueryClient(); const [form,setForm]=React.useState(emptyForm);
+ const data=useQuery({queryKey:["staff-directory"],queryFn:async()=>{const {data:r,error:re}=await supabase.from("user_roles").select("user_id,role").in("role",["admin","headteacher","teacher"]);if(re)throw re;const ids=[...new Set((r??[]).map(x=>x.user_id))];const profiles=ids.length?(await supabase.from("profiles").select("id,first_name,last_name,email,phone,is_active").in("id",ids).order("first_name")).data??[]:[];return profiles.map(x=>({...x,roles:(r??[]).filter(y=>y.user_id===x.id).map(y=>y.role)}));}});
+ const records=useQuery({queryKey:["staff-records"],queryFn:async()=>{const {data,error}=await (supabase as any).from("staff_records").select("*").order("created_at",{ascending:false});if(error)throw error;return data??[];}});
+ const add=useMutation({mutationFn:async()=>{if(!form.first_name||!form.last_name||!form.phone||!form.email||!form.password)throw new Error("First name, last name, phone, email and portal password are required.");if(form.password.length<8)throw new Error("Portal password must be at least 8 characters.");const {data,error}=await supabase.functions.invoke("create-teacher-account",{body:{email:form.email,password:form.password,firstName:form.first_name,lastName:form.last_name,phone:form.phone,employeeNo:form.employee_no,subject:form.subject,hireDate:form.hire_date}});if(error)throw error;if(data?.error)throw new Error(data.error);return data;},onSuccess:(d:any)=>{qc.invalidateQueries({queryKey:["staff-records"]});qc.invalidateQueries({queryKey:["staff-directory"]});setForm(emptyForm);alert(`Teacher registration successful.\n\nPortal email: ${d.email}\nPortal password: ${"the password you entered"}\n\nGive these login details to the teacher. They can change the password after signing in.`);},onError:e=>alert(e instanceof Error?e.message:"Could not register teacher")});
+ const rows=(data.data??[]).filter(p=>!q||`${p.first_name} ${p.last_name} ${p.email??""} ${p.phone??""}`.toLowerCase().includes(q.toLowerCase()));
+ return <div><PageHeader title="Staff" description="Register teachers with a working portal account, then manage classes and assignments separately."/>
+ <Card className="mb-6"><CardHeader><CardTitle className="text-base">Register teacher & create portal login</CardTitle></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+ <Input placeholder="First name" value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})}/><Input placeholder="Last name" value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})}/><Input placeholder="Employee number" value={form.employee_no} onChange={e=>setForm({...form,employee_no:e.target.value})}/><Input placeholder="Phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/><Input type="email" placeholder="Portal email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/><Input type="password" minLength={8} placeholder="Portal password (8+ chars)" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/><Input placeholder="Main subject / responsibility" value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})}/><Input type="date" value={form.hire_date} onChange={e=>setForm({...form,hire_date:e.target.value})}/>
+ <Button onClick={()=>add.mutate()} disabled={add.isPending}>{add.isPending?"Creating account…":"Register teacher"}</Button></div><p className="mt-3 text-xs text-muted-foreground">The password is set by Admin/Headteacher during registration. The teacher uses the email and password above to enter the Teacher Portal.</p></CardContent></Card>
+ <Input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search active staff accounts" className="mb-4 max-w-md"/><Card className="mb-6"><CardContent className="p-4">{rows.length?<div className="divide-y">{rows.map(p=><div key={p.id} className="flex flex-wrap justify-between gap-3 p-4"><div><p className="font-semibold">{fullName(p)}</p><p className="text-sm text-muted-foreground">{p.email??"No email"} · {p.phone??"No phone"}</p></div><div>{p.roles.map((r:string)=><Badge key={r} className="mr-1">{roleLabels[r as keyof typeof roleLabels]}</Badge>)}</div></div>)}</div>:<EmptyState message="No staff accounts found."/>}</CardContent></Card>
+ <Card><CardHeader><CardTitle className="text-base">Recorded staff admissions</CardTitle></CardHeader><CardContent className="p-4">{records.data?.length?<div className="divide-y">{records.data.map((r:any)=><div key={r.id} className="grid gap-1 p-4 md:grid-cols-5"><b>{r.first_name} {r.last_name}</b><span>{r.employee_no||"—"}</span><span>{r.phone}</span><span>{r.subject||"—"}</span><span>{r.hire_date||"—"}</span></div>)}</div>:<EmptyState message="No manually entered staff records yet."/>}</CardContent></Card></div>
+}
