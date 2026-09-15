@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/portal/students")({
 });
 
 function StudentsLayout() {
-  return <><StudentsPage /><Outlet /></>;
+  return <><Outlet /><StudentsPage /></>;
 }
 
 function StudentsPage() {
