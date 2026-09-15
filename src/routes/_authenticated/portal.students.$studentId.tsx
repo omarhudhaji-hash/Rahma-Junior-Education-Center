@@ -25,7 +25,8 @@ function StudentProfilePage() {
   const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
   const { studentId } = Route.useParams();
   const student = useQuery({
-    queryKey: ["student-profile", studentId, userId],
+    queryKey: ["student-profile", studentId],
+    enabled: Boolean(studentId),
     queryFn: async () => {
       const { data, error } = await supabase.from("students").select("id,admission_no,first_name,last_name,date_of_birth,gender,status,admission_date,medical_notes,emergency_contact,emergency_phone,photo_url,current_class_id,classes:current_class_id(name,section)").eq("id", studentId).maybeSingle();
       if (error) throw error;
@@ -82,7 +83,7 @@ function StudentProfilePage() {
     return () => { cancelled = true; };
   }, [studentPhotoPath]);
 
-  if (student.isLoading) return <p className="text-sm text-muted-foreground">Loading student profile…</p>;
+  if (student.isPending) return <p className="text-sm text-muted-foreground">Loading student profile…</p>;
   if (student.isError) return <EmptyState message={student.error instanceof Error ? student.error.message : "Unable to load student profile."} />;
   const s = student.data;
   const className = s.classes?.name ? `${s.classes.name}${s.classes.section ? ` — ${s.classes.section}` : ""}` : "Not assigned";

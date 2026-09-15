@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { requirePortalRoles } from "@/lib/permissions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -16,8 +16,12 @@ import { UserRound } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/portal/students")({
   beforeLoad: async () => { await requirePortalRoles(["admin","headteacher","teacher","parent","student"]); },
-  component: StudentsPage,
+  component: StudentsLayout,
 });
+
+function StudentsLayout() {
+  return <><StudentsPage /><Outlet /></>;
+}
 
 function StudentsPage() {
   const {userId, isLeadership, hasRole}=useMe(); const qc=useQueryClient(); const family=hasRole("parent")||hasRole("student"); const [q,setQ]=useState("");
