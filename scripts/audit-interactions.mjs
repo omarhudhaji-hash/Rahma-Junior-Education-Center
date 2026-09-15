@@ -28,7 +28,6 @@ const info = [];
 for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
   const rel = path.relative(process.cwd(), file);
-  const lines = text.split(/\r?\n/);
 
   const buttonTags = [...text.matchAll(/<Button\b[\s\S]*?>/g)];
   for (const match of buttonTags) {

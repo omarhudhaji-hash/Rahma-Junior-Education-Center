@@ -68,18 +68,19 @@ function StudentProfilePage() {
       return (links ?? []).map(l => ({ ...l, profile: (data ?? []).find(p => p.id === l.parent_id) }));
     },
   });
+  const studentPhotoPath = (student.data as any)?.photo_url;
 
   React.useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const path = (student.data as any)?.photo_url;
+      const path = studentPhotoPath;
       if (!path) { setPhotoUrl(null); return; }
       const { data } = await supabase.storage.from("student-photos").createSignedUrl(path, 3600);
       if (!cancelled) setPhotoUrl(data?.signedUrl ?? null);
     };
     load();
     return () => { cancelled = true; };
-  }, [(student.data as any)?.photo_url]);
+  }, [studentPhotoPath]);
 
   if (student.isLoading) return <p className="text-sm text-muted-foreground">Loading student profile…</p>;
   if (student.isError) return <EmptyState message={student.error instanceof Error ? student.error.message : "Unable to load student profile."} />;

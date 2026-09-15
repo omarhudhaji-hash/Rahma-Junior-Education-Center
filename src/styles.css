@@ -187,6 +187,22 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    max-width: 100%;
   }
 
   h1,
@@ -257,4 +273,28 @@
 
 @utility slide-kenburns {
   animation: rahma-kenburns 12s ease-out forwards;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    width: 100%;
+  }
+
+  html {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body {
+    min-width: 320px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  #root {
+    overflow-x: hidden;
+  }
 }

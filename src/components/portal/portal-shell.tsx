@@ -148,18 +148,18 @@ export function PortalShell({ children }: { children: ReactNode }) {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open portal navigation"><Menu className="size-4" /></Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 bg-navy text-navy-foreground">
-              <div className="mt-8">{nav}</div>
+            <SheetContent side="left" className="h-dvh max-h-dvh w-72 overflow-y-auto bg-navy text-navy-foreground">
+              <div className="mt-8 pb-2">{nav}</div>
             </SheetContent>
           </Sheet>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
             <Button variant="ghost" size="icon" aria-label="Notifications" onClick={() => navigate({ to: "/portal/announcements" })}>
               <Bell className="size-4" />
             </Button>
-            <div className="hidden text-right sm:block">
+            <div className="hidden min-w-0 text-right sm:block">
               <p className="text-sm font-semibold text-navy">{name}</p>
-              <p className="text-[11px] uppercase tracking-brand text-muted-foreground">{roleLabels[primaryRole]}</p>
+              <p className="truncate text-[11px] uppercase tracking-brand text-muted-foreground">{roleLabels[primaryRole]}</p>
             </div>
             <ProfileAvatar path={profile?.photo_url} name={name} size="sm" />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("logout")}>

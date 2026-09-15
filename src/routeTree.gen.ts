@@ -18,28 +18,28 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedPortalAcademicRouteImport } from './routes/_authenticated/portal.academic'
 import { Route as AuthenticatedPortalAdmissionsRouteImport } from './routes/_authenticated/portal.admissions'
 import { Route as AuthenticatedPortalAnnouncementsRouteImport } from './routes/_authenticated/portal.announcements'
 import { Route as AuthenticatedPortalAttendanceRouteImport } from './routes/_authenticated/portal.attendance'
+import { Route as AuthenticatedPortalAuditLogsRouteImport } from './routes/_authenticated/portal.audit-logs'
+import { Route as AuthenticatedPortalCalendarRouteImport } from './routes/_authenticated/portal.calendar'
 import { Route as AuthenticatedPortalClassesRouteImport } from './routes/_authenticated/portal.classes'
+import { Route as AuthenticatedPortalDocumentsRouteImport } from './routes/_authenticated/portal.documents'
 import { Route as AuthenticatedPortalExamsRouteImport } from './routes/_authenticated/portal.exams'
 import { Route as AuthenticatedPortalFinanceRouteImport } from './routes/_authenticated/portal.finance'
 import { Route as AuthenticatedPortalInventoryRouteImport } from './routes/_authenticated/portal.inventory'
 import { Route as AuthenticatedPortalMessagesRouteImport } from './routes/_authenticated/portal.messages'
 import { Route as AuthenticatedPortalParentsRouteImport } from './routes/_authenticated/portal.parents'
-import { Route as AuthenticatedPortalParentsParentIdRouteImport } from './routes/_authenticated/portal.parents.$parentId'
 import { Route as AuthenticatedPortalPeopleRouteImport } from './routes/_authenticated/portal.people'
 import { Route as AuthenticatedPortalProfileRouteImport } from './routes/_authenticated/portal.profile'
+import { Route as AuthenticatedPortalReportsRouteImport } from './routes/_authenticated/portal.reports'
+import { Route as AuthenticatedPortalSettingsRouteImport } from './routes/_authenticated/portal.settings'
 import { Route as AuthenticatedPortalStaffRouteImport } from './routes/_authenticated/portal.staff'
 import { Route as AuthenticatedPortalStudentsRouteImport } from './routes/_authenticated/portal.students'
 import { Route as AuthenticatedPortalTimetableRouteImport } from './routes/_authenticated/portal.timetable'
+import { Route as AuthenticatedPortalParentsParentIdRouteImport } from './routes/_authenticated/portal.parents.$parentId'
 import { Route as AuthenticatedPortalStudentsStudentIdRouteImport } from './routes/_authenticated/portal.students.$studentId'
-import { Route as AuthenticatedPortalAcademicRouteImport } from './routes/_authenticated/portal.academic'
-import { Route as AuthenticatedPortalDocumentsRouteImport } from './routes/_authenticated/portal.documents'
-import { Route as AuthenticatedPortalCalendarRouteImport } from './routes/_authenticated/portal.calendar'
-import { Route as AuthenticatedPortalAuditLogsRouteImport } from './routes/_authenticated/portal.audit-logs'
-import { Route as AuthenticatedPortalReportsRouteImport } from './routes/_authenticated/portal.reports'
-import { Route as AuthenticatedPortalSettingsRouteImport } from './routes/_authenticated/portal.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -85,6 +85,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPortalAcademicRoute =
+  AuthenticatedPortalAcademicRouteImport.update({
+    id: '/portal/academic',
+    path: '/portal/academic',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPortalAdmissionsRoute =
   AuthenticatedPortalAdmissionsRouteImport.update({
     id: '/portal/admissions',
@@ -103,10 +109,28 @@ const AuthenticatedPortalAttendanceRoute =
     path: '/portal/attendance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPortalAuditLogsRoute =
+  AuthenticatedPortalAuditLogsRouteImport.update({
+    id: '/portal/audit-logs',
+    path: '/portal/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalCalendarRoute =
+  AuthenticatedPortalCalendarRouteImport.update({
+    id: '/portal/calendar',
+    path: '/portal/calendar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPortalClassesRoute =
   AuthenticatedPortalClassesRouteImport.update({
     id: '/portal/classes',
     path: '/portal/classes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalDocumentsRoute =
+  AuthenticatedPortalDocumentsRouteImport.update({
+    id: '/portal/documents',
+    path: '/portal/documents',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPortalExamsRoute =
@@ -139,12 +163,6 @@ const AuthenticatedPortalParentsRoute =
     path: '/portal/parents',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPortalParentsParentIdRoute =
-  AuthenticatedPortalParentsParentIdRouteImport.update({
-    id: '/$parentId',
-    path: '/$parentId',
-    getParentRoute: () => AuthenticatedPortalParentsRoute,
-  } as any)
 const AuthenticatedPortalPeopleRoute =
   AuthenticatedPortalPeopleRouteImport.update({
     id: '/portal/people',
@@ -155,6 +173,18 @@ const AuthenticatedPortalProfileRoute =
   AuthenticatedPortalProfileRouteImport.update({
     id: '/portal/profile',
     path: '/portal/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalReportsRoute =
+  AuthenticatedPortalReportsRouteImport.update({
+    id: '/portal/reports',
+    path: '/portal/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalSettingsRoute =
+  AuthenticatedPortalSettingsRouteImport.update({
+    id: '/portal/settings',
+    path: '/portal/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPortalStaffRoute =
@@ -175,42 +205,18 @@ const AuthenticatedPortalTimetableRoute =
     path: '/portal/timetable',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPortalParentsParentIdRoute =
+  AuthenticatedPortalParentsParentIdRouteImport.update({
+    id: '/$parentId',
+    path: '/$parentId',
+    getParentRoute: () => AuthenticatedPortalParentsRoute,
+  } as any)
 const AuthenticatedPortalStudentsStudentIdRoute =
   AuthenticatedPortalStudentsStudentIdRouteImport.update({
     id: '/$studentId',
     path: '/$studentId',
     getParentRoute: () => AuthenticatedPortalStudentsRoute,
   } as any)
-const AuthenticatedPortalAcademicRoute = AuthenticatedPortalAcademicRouteImport.update({
-  id: '/_authenticated/portal/academic',
-  path: '/portal/academic',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPortalDocumentsRoute = AuthenticatedPortalDocumentsRouteImport.update({
-  id: '/_authenticated/portal/documents',
-  path: '/portal/documents',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPortalCalendarRoute = AuthenticatedPortalCalendarRouteImport.update({
-  id: '/_authenticated/portal/calendar',
-  path: '/portal/calendar',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPortalAuditLogsRoute = AuthenticatedPortalAuditLogsRouteImport.update({
-  id: '/_authenticated/portal/audit-logs',
-  path: '/portal/audit-logs',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPortalReportsRoute = AuthenticatedPortalReportsRouteImport.update({
-  id: '/_authenticated/portal/reports',
-  path: '/portal/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPortalSettingsRoute = AuthenticatedPortalSettingsRouteImport.update({
-  id: '/_authenticated/portal/settings',
-  path: '/portal/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -221,27 +227,28 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/portal/academic': typeof AuthenticatedPortalAcademicRoute
   '/portal/admissions': typeof AuthenticatedPortalAdmissionsRoute
   '/portal/announcements': typeof AuthenticatedPortalAnnouncementsRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/audit-logs': typeof AuthenticatedPortalAuditLogsRoute
+  '/portal/calendar': typeof AuthenticatedPortalCalendarRoute
   '/portal/classes': typeof AuthenticatedPortalClassesRoute
+  '/portal/documents': typeof AuthenticatedPortalDocumentsRoute
   '/portal/exams': typeof AuthenticatedPortalExamsRoute
   '/portal/finance': typeof AuthenticatedPortalFinanceRoute
   '/portal/inventory': typeof AuthenticatedPortalInventoryRoute
   '/portal/messages': typeof AuthenticatedPortalMessagesRoute
-  '/portal/parents': typeof AuthenticatedPortalParentsRoute
+  '/portal/parents': typeof AuthenticatedPortalParentsRouteWithChildren
   '/portal/people': typeof AuthenticatedPortalPeopleRoute
   '/portal/profile': typeof AuthenticatedPortalProfileRoute
+  '/portal/reports': typeof AuthenticatedPortalReportsRoute
+  '/portal/settings': typeof AuthenticatedPortalSettingsRoute
   '/portal/staff': typeof AuthenticatedPortalStaffRoute
   '/portal/students': typeof AuthenticatedPortalStudentsRouteWithChildren
   '/portal/timetable': typeof AuthenticatedPortalTimetableRoute
+  '/portal/parents/$parentId': typeof AuthenticatedPortalParentsParentIdRoute
   '/portal/students/$studentId': typeof AuthenticatedPortalStudentsStudentIdRoute
-  '/portal/academic': typeof AuthenticatedPortalAcademicRoute
-  '/portal/documents': typeof AuthenticatedPortalDocumentsRoute
-  '/portal/calendar': typeof AuthenticatedPortalCalendarRoute
-  '/portal/audit-logs': typeof AuthenticatedPortalAuditLogsRoute
-  '/portal/reports': typeof AuthenticatedPortalReportsRoute
-  '/portal/settings': typeof AuthenticatedPortalSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -252,27 +259,28 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/portal/academic': typeof AuthenticatedPortalAcademicRoute
   '/portal/admissions': typeof AuthenticatedPortalAdmissionsRoute
   '/portal/announcements': typeof AuthenticatedPortalAnnouncementsRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/audit-logs': typeof AuthenticatedPortalAuditLogsRoute
+  '/portal/calendar': typeof AuthenticatedPortalCalendarRoute
   '/portal/classes': typeof AuthenticatedPortalClassesRoute
+  '/portal/documents': typeof AuthenticatedPortalDocumentsRoute
   '/portal/exams': typeof AuthenticatedPortalExamsRoute
   '/portal/finance': typeof AuthenticatedPortalFinanceRoute
   '/portal/inventory': typeof AuthenticatedPortalInventoryRoute
   '/portal/messages': typeof AuthenticatedPortalMessagesRoute
-  '/portal/parents': typeof AuthenticatedPortalParentsRoute
+  '/portal/parents': typeof AuthenticatedPortalParentsRouteWithChildren
   '/portal/people': typeof AuthenticatedPortalPeopleRoute
   '/portal/profile': typeof AuthenticatedPortalProfileRoute
+  '/portal/reports': typeof AuthenticatedPortalReportsRoute
+  '/portal/settings': typeof AuthenticatedPortalSettingsRoute
   '/portal/staff': typeof AuthenticatedPortalStaffRoute
   '/portal/students': typeof AuthenticatedPortalStudentsRouteWithChildren
   '/portal/timetable': typeof AuthenticatedPortalTimetableRoute
+  '/portal/parents/$parentId': typeof AuthenticatedPortalParentsParentIdRoute
   '/portal/students/$studentId': typeof AuthenticatedPortalStudentsStudentIdRoute
-  '/portal/academic': typeof AuthenticatedPortalAcademicRoute
-  '/portal/documents': typeof AuthenticatedPortalDocumentsRoute
-  '/portal/calendar': typeof AuthenticatedPortalCalendarRoute
-  '/portal/audit-logs': typeof AuthenticatedPortalAuditLogsRoute
-  '/portal/reports': typeof AuthenticatedPortalReportsRoute
-  '/portal/settings': typeof AuthenticatedPortalSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -285,27 +293,28 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/portal/academic': typeof AuthenticatedPortalAcademicRoute
   '/_authenticated/portal/admissions': typeof AuthenticatedPortalAdmissionsRoute
   '/_authenticated/portal/announcements': typeof AuthenticatedPortalAnnouncementsRoute
   '/_authenticated/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/_authenticated/portal/audit-logs': typeof AuthenticatedPortalAuditLogsRoute
+  '/_authenticated/portal/calendar': typeof AuthenticatedPortalCalendarRoute
   '/_authenticated/portal/classes': typeof AuthenticatedPortalClassesRoute
+  '/_authenticated/portal/documents': typeof AuthenticatedPortalDocumentsRoute
   '/_authenticated/portal/exams': typeof AuthenticatedPortalExamsRoute
   '/_authenticated/portal/finance': typeof AuthenticatedPortalFinanceRoute
   '/_authenticated/portal/inventory': typeof AuthenticatedPortalInventoryRoute
   '/_authenticated/portal/messages': typeof AuthenticatedPortalMessagesRoute
-  '/_authenticated/portal/parents': typeof AuthenticatedPortalParentsRoute
+  '/_authenticated/portal/parents': typeof AuthenticatedPortalParentsRouteWithChildren
   '/_authenticated/portal/people': typeof AuthenticatedPortalPeopleRoute
   '/_authenticated/portal/profile': typeof AuthenticatedPortalProfileRoute
+  '/_authenticated/portal/reports': typeof AuthenticatedPortalReportsRoute
+  '/_authenticated/portal/settings': typeof AuthenticatedPortalSettingsRoute
   '/_authenticated/portal/staff': typeof AuthenticatedPortalStaffRoute
   '/_authenticated/portal/students': typeof AuthenticatedPortalStudentsRouteWithChildren
   '/_authenticated/portal/timetable': typeof AuthenticatedPortalTimetableRoute
+  '/_authenticated/portal/parents/$parentId': typeof AuthenticatedPortalParentsParentIdRoute
   '/_authenticated/portal/students/$studentId': typeof AuthenticatedPortalStudentsStudentIdRoute
-  '/_authenticated/portal/academic': typeof AuthenticatedPortalAcademicRoute
-  '/_authenticated/portal/documents': typeof AuthenticatedPortalDocumentsRoute
-  '/_authenticated/portal/calendar': typeof AuthenticatedPortalCalendarRoute
-  '/_authenticated/portal/audit-logs': typeof AuthenticatedPortalAuditLogsRoute
-  '/_authenticated/portal/reports': typeof AuthenticatedPortalReportsRoute
-  '/_authenticated/portal/settings': typeof AuthenticatedPortalSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -318,10 +327,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/gallery'
     | '/dashboard'
+    | '/portal/academic'
     | '/portal/admissions'
     | '/portal/announcements'
     | '/portal/attendance'
+    | '/portal/audit-logs'
+    | '/portal/calendar'
     | '/portal/classes'
+    | '/portal/documents'
     | '/portal/exams'
     | '/portal/finance'
     | '/portal/inventory'
@@ -329,17 +342,13 @@ export interface FileRouteTypes {
     | '/portal/parents'
     | '/portal/people'
     | '/portal/profile'
+    | '/portal/reports'
+    | '/portal/settings'
     | '/portal/staff'
     | '/portal/students'
     | '/portal/timetable'
+    | '/portal/parents/$parentId'
     | '/portal/students/$studentId'
-    | '/portal/settings'
-    | '/portal/settings'
-    | '/portal/academic'
-    | '/portal/documents'
-    | '/portal/calendar'
-    | '/portal/audit-logs'
-    | '/portal/reports'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -350,10 +359,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/gallery'
     | '/dashboard'
+    | '/portal/academic'
     | '/portal/admissions'
     | '/portal/announcements'
     | '/portal/attendance'
+    | '/portal/audit-logs'
+    | '/portal/calendar'
     | '/portal/classes'
+    | '/portal/documents'
     | '/portal/exams'
     | '/portal/finance'
     | '/portal/inventory'
@@ -361,16 +374,13 @@ export interface FileRouteTypes {
     | '/portal/parents'
     | '/portal/people'
     | '/portal/profile'
+    | '/portal/reports'
+    | '/portal/settings'
     | '/portal/staff'
     | '/portal/students'
     | '/portal/timetable'
+    | '/portal/parents/$parentId'
     | '/portal/students/$studentId'
-    | '/portal/academic'
-    | '/portal/documents'
-    | '/portal/calendar'
-    | '/portal/audit-logs'
-    | '/portal/reports'
-    | '/portal/settings'
   id:
     | '__root__'
     | '/'
@@ -382,10 +392,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/gallery'
     | '/_authenticated/dashboard'
+    | '/_authenticated/portal/academic'
     | '/_authenticated/portal/admissions'
     | '/_authenticated/portal/announcements'
     | '/_authenticated/portal/attendance'
+    | '/_authenticated/portal/audit-logs'
+    | '/_authenticated/portal/calendar'
     | '/_authenticated/portal/classes'
+    | '/_authenticated/portal/documents'
     | '/_authenticated/portal/exams'
     | '/_authenticated/portal/finance'
     | '/_authenticated/portal/inventory'
@@ -393,16 +407,13 @@ export interface FileRouteTypes {
     | '/_authenticated/portal/parents'
     | '/_authenticated/portal/people'
     | '/_authenticated/portal/profile'
+    | '/_authenticated/portal/reports'
+    | '/_authenticated/portal/settings'
     | '/_authenticated/portal/staff'
     | '/_authenticated/portal/students'
     | '/_authenticated/portal/timetable'
+    | '/_authenticated/portal/parents/$parentId'
     | '/_authenticated/portal/students/$studentId'
-    | '/_authenticated/portal/academic'
-    | '/_authenticated/portal/documents'
-    | '/_authenticated/portal/calendar'
-    | '/_authenticated/portal/audit-logs'
-    | '/_authenticated/portal/reports'
-    | '/_authenticated/portal/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -481,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal/academic': {
+      id: '/_authenticated/portal/academic'
+      path: '/portal/academic'
+      fullPath: '/portal/academic'
+      preLoaderRoute: typeof AuthenticatedPortalAcademicRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/portal/admissions': {
       id: '/_authenticated/portal/admissions'
       path: '/portal/admissions'
@@ -502,11 +520,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalAttendanceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal/audit-logs': {
+      id: '/_authenticated/portal/audit-logs'
+      path: '/portal/audit-logs'
+      fullPath: '/portal/audit-logs'
+      preLoaderRoute: typeof AuthenticatedPortalAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/calendar': {
+      id: '/_authenticated/portal/calendar'
+      path: '/portal/calendar'
+      fullPath: '/portal/calendar'
+      preLoaderRoute: typeof AuthenticatedPortalCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/portal/classes': {
       id: '/_authenticated/portal/classes'
       path: '/portal/classes'
       fullPath: '/portal/classes'
       preLoaderRoute: typeof AuthenticatedPortalClassesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/documents': {
+      id: '/_authenticated/portal/documents'
+      path: '/portal/documents'
+      fullPath: '/portal/documents'
+      preLoaderRoute: typeof AuthenticatedPortalDocumentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/portal/exams': {
@@ -544,13 +583,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalParentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/portal/parents/$parentId': {
-      id: '/_authenticated/portal/parents/$parentId'
-      path: '/$parentId'
-      fullPath: '/portal/parents/$parentId'
-      preLoaderRoute: typeof AuthenticatedPortalParentsParentIdRouteImport
-      parentRoute: typeof AuthenticatedPortalParentsRoute
-    }
     '/_authenticated/portal/people': {
       id: '/_authenticated/portal/people'
       path: '/portal/people'
@@ -563,6 +595,20 @@ declare module '@tanstack/react-router' {
       path: '/portal/profile'
       fullPath: '/portal/profile'
       preLoaderRoute: typeof AuthenticatedPortalProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/reports': {
+      id: '/_authenticated/portal/reports'
+      path: '/portal/reports'
+      fullPath: '/portal/reports'
+      preLoaderRoute: typeof AuthenticatedPortalReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/settings': {
+      id: '/_authenticated/portal/settings'
+      path: '/portal/settings'
+      fullPath: '/portal/settings'
+      preLoaderRoute: typeof AuthenticatedPortalSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/portal/staff': {
@@ -586,6 +632,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalTimetableRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal/parents/$parentId': {
+      id: '/_authenticated/portal/parents/$parentId'
+      path: '/$parentId'
+      fullPath: '/portal/parents/$parentId'
+      preLoaderRoute: typeof AuthenticatedPortalParentsParentIdRouteImport
+      parentRoute: typeof AuthenticatedPortalParentsRoute
+    }
     '/_authenticated/portal/students/$studentId': {
       id: '/_authenticated/portal/students/$studentId'
       path: '/$studentId'
@@ -593,50 +646,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalStudentsStudentIdRouteImport
       parentRoute: typeof AuthenticatedPortalStudentsRoute
     }
-    '/_authenticated/portal/academic': {
-      id: '/_authenticated/portal/academic'
-      path: '/portal/academic'
-      fullPath: '/portal/academic'
-      preLoaderRoute: typeof AuthenticatedPortalAcademicRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/portal/documents': {
-      id: '/_authenticated/portal/documents'
-      path: '/portal/documents'
-      fullPath: '/portal/documents'
-      preLoaderRoute: typeof AuthenticatedPortalDocumentsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/portal/calendar': {
-      id: '/_authenticated/portal/calendar'
-      path: '/portal/calendar'
-      fullPath: '/portal/calendar'
-      preLoaderRoute: typeof AuthenticatedPortalCalendarRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/portal/audit-logs': {
-      id: '/_authenticated/portal/audit-logs'
-      path: '/portal/audit-logs'
-      fullPath: '/portal/audit-logs'
-      preLoaderRoute: typeof AuthenticatedPortalAuditLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/portal/reports': {
-      id: '/_authenticated/portal/reports'
-      path: '/portal/reports'
-      fullPath: '/portal/reports'
-      preLoaderRoute: typeof AuthenticatedPortalReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/portal/settings': {
-      id: '/_authenticated/portal/settings'
-      path: '/portal/settings'
-      fullPath: '/portal/settings'
-      preLoaderRoute: typeof AuthenticatedPortalSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
+
+interface AuthenticatedPortalParentsRouteChildren {
+  AuthenticatedPortalParentsParentIdRoute: typeof AuthenticatedPortalParentsParentIdRoute
+}
+
+const AuthenticatedPortalParentsRouteChildren: AuthenticatedPortalParentsRouteChildren =
+  {
+    AuthenticatedPortalParentsParentIdRoute:
+      AuthenticatedPortalParentsParentIdRoute,
+  }
+
+const AuthenticatedPortalParentsRouteWithChildren =
+  AuthenticatedPortalParentsRoute._addFileChildren(
+    AuthenticatedPortalParentsRouteChildren,
+  )
 
 interface AuthenticatedPortalStudentsRouteChildren {
   AuthenticatedPortalStudentsStudentIdRoute: typeof AuthenticatedPortalStudentsStudentIdRoute
@@ -653,23 +679,16 @@ const AuthenticatedPortalStudentsRouteWithChildren =
     AuthenticatedPortalStudentsRouteChildren,
   )
 
-interface AuthenticatedPortalParentsRouteChildren {
-  AuthenticatedPortalParentsParentIdRoute: typeof AuthenticatedPortalParentsParentIdRoute
-}
-
-const AuthenticatedPortalParentsRouteChildren: AuthenticatedPortalParentsRouteChildren = {
-  AuthenticatedPortalParentsParentIdRoute: AuthenticatedPortalParentsParentIdRoute,
-}
-
-const AuthenticatedPortalParentsRouteWithChildren =
-  AuthenticatedPortalParentsRoute._addFileChildren(AuthenticatedPortalParentsRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedPortalAcademicRoute: typeof AuthenticatedPortalAcademicRoute
   AuthenticatedPortalAdmissionsRoute: typeof AuthenticatedPortalAdmissionsRoute
   AuthenticatedPortalAnnouncementsRoute: typeof AuthenticatedPortalAnnouncementsRoute
   AuthenticatedPortalAttendanceRoute: typeof AuthenticatedPortalAttendanceRoute
+  AuthenticatedPortalAuditLogsRoute: typeof AuthenticatedPortalAuditLogsRoute
+  AuthenticatedPortalCalendarRoute: typeof AuthenticatedPortalCalendarRoute
   AuthenticatedPortalClassesRoute: typeof AuthenticatedPortalClassesRoute
+  AuthenticatedPortalDocumentsRoute: typeof AuthenticatedPortalDocumentsRoute
   AuthenticatedPortalExamsRoute: typeof AuthenticatedPortalExamsRoute
   AuthenticatedPortalFinanceRoute: typeof AuthenticatedPortalFinanceRoute
   AuthenticatedPortalInventoryRoute: typeof AuthenticatedPortalInventoryRoute
@@ -677,23 +696,23 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPortalParentsRoute: typeof AuthenticatedPortalParentsRouteWithChildren
   AuthenticatedPortalPeopleRoute: typeof AuthenticatedPortalPeopleRoute
   AuthenticatedPortalProfileRoute: typeof AuthenticatedPortalProfileRoute
+  AuthenticatedPortalReportsRoute: typeof AuthenticatedPortalReportsRoute
+  AuthenticatedPortalSettingsRoute: typeof AuthenticatedPortalSettingsRoute
   AuthenticatedPortalStaffRoute: typeof AuthenticatedPortalStaffRoute
   AuthenticatedPortalStudentsRoute: typeof AuthenticatedPortalStudentsRouteWithChildren
   AuthenticatedPortalTimetableRoute: typeof AuthenticatedPortalTimetableRoute
-  AuthenticatedPortalAcademicRoute: typeof AuthenticatedPortalAcademicRoute
-  AuthenticatedPortalDocumentsRoute: typeof AuthenticatedPortalDocumentsRoute
-  AuthenticatedPortalCalendarRoute: typeof AuthenticatedPortalCalendarRoute
-  AuthenticatedPortalAuditLogsRoute: typeof AuthenticatedPortalAuditLogsRoute
-  AuthenticatedPortalReportsRoute: typeof AuthenticatedPortalReportsRoute
-  AuthenticatedPortalSettingsRoute: typeof AuthenticatedPortalSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedPortalAcademicRoute: AuthenticatedPortalAcademicRoute,
   AuthenticatedPortalAdmissionsRoute: AuthenticatedPortalAdmissionsRoute,
   AuthenticatedPortalAnnouncementsRoute: AuthenticatedPortalAnnouncementsRoute,
   AuthenticatedPortalAttendanceRoute: AuthenticatedPortalAttendanceRoute,
+  AuthenticatedPortalAuditLogsRoute: AuthenticatedPortalAuditLogsRoute,
+  AuthenticatedPortalCalendarRoute: AuthenticatedPortalCalendarRoute,
   AuthenticatedPortalClassesRoute: AuthenticatedPortalClassesRoute,
+  AuthenticatedPortalDocumentsRoute: AuthenticatedPortalDocumentsRoute,
   AuthenticatedPortalExamsRoute: AuthenticatedPortalExamsRoute,
   AuthenticatedPortalFinanceRoute: AuthenticatedPortalFinanceRoute,
   AuthenticatedPortalInventoryRoute: AuthenticatedPortalInventoryRoute,
@@ -701,16 +720,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPortalParentsRoute: AuthenticatedPortalParentsRouteWithChildren,
   AuthenticatedPortalPeopleRoute: AuthenticatedPortalPeopleRoute,
   AuthenticatedPortalProfileRoute: AuthenticatedPortalProfileRoute,
+  AuthenticatedPortalReportsRoute: AuthenticatedPortalReportsRoute,
+  AuthenticatedPortalSettingsRoute: AuthenticatedPortalSettingsRoute,
   AuthenticatedPortalStaffRoute: AuthenticatedPortalStaffRoute,
   AuthenticatedPortalStudentsRoute:
     AuthenticatedPortalStudentsRouteWithChildren,
   AuthenticatedPortalTimetableRoute: AuthenticatedPortalTimetableRoute,
-  AuthenticatedPortalAcademicRoute: AuthenticatedPortalAcademicRoute,
-  AuthenticatedPortalDocumentsRoute: AuthenticatedPortalDocumentsRoute,
-  AuthenticatedPortalCalendarRoute: AuthenticatedPortalCalendarRoute,
-  AuthenticatedPortalAuditLogsRoute: AuthenticatedPortalAuditLogsRoute,
-  AuthenticatedPortalReportsRoute: AuthenticatedPortalReportsRoute,
-  AuthenticatedPortalSettingsRoute: AuthenticatedPortalSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
