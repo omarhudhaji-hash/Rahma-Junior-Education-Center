@@ -63,10 +63,33 @@ function StudentProfilePage() {
       const { data: links, error: le } = await supabase.from("parent_student").select("parent_id,relationship,is_primary").eq("student_id", studentId);
       if (le) throw le;
       const ids = (links ?? []).map(x => x.parent_id);
-      if (!ids.length) return [];
-      const { data, error } = await supabase.from("profiles").select("id,first_name,last_name,email,phone").in("id", ids);
-      if (error) throw error;
-      return (links ?? []).map(l => ({ ...l, profile: (data ?? []).find(p => p.id === l.parent_id) }));
+      const { data: profiles, error: profileError } = ids.length
+        ? await supabase.from("profiles").select("id,first_name,last_name,email,phone").in("id", ids)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      const linkedParents = (links ?? []).map(l => ({ ...l, profile: (profiles ?? []).find(p => p.id === l.parent_id) }));
+      if (linkedParents.length) return linkedParents;
+
+      const { data: familyStudent, error: familyError } = await supabase
+        .from("admission_family_students")
+        .select("family_id,admission_families:family_id(parent_name,parent_phone,parent_email)")
+        .eq("student_id", studentId)
+        .maybeSingle();
+      if (familyError) throw familyError;
+      const family = (familyStudent as any)?.admission_families;
+      if (!family) return [];
+      const nameParts = String(family.parent_name ?? "Parent / guardian").trim().split(/\s+/);
+      return [{
+        parent_id: null,
+        relationship: "parent",
+        is_primary: true,
+        profile: {
+          first_name: nameParts.shift() ?? "Parent",
+          last_name: nameParts.join(" "),
+          email: family.parent_email,
+          phone: family.parent_phone,
+        },
+      }];
     },
   });
   const studentPhotoPath = (student.data as any)?.photo_url;

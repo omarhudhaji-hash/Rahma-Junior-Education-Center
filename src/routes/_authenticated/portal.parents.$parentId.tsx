@@ -17,6 +17,11 @@ import { Separator } from "@/components/ui/separator";
 import { useMe } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
+function getChildLinkError(error: unknown): string {
+  const value = error as { message?: string; details?: string; hint?: string } | null;
+  return [value?.message, value?.details, value?.hint].filter(Boolean).join(" — ") || "Could not link child.";
+}
+
 export const Route = createFileRoute("/_authenticated/portal/parents/$parentId")({
   beforeLoad: async () => { await requirePortalRoles(["admin", "headteacher"]); },
   component: ParentProfilePage,
@@ -30,9 +35,10 @@ function ParentProfilePage() {
   const [passwordOpen, setPasswordOpen] = React.useState(false);
   const [password, setPassword] = React.useState("");
   const [studentId, setStudentId] = React.useState("");
+  const [parentPhone, setParentPhone] = React.useState("");
   const [relationship, setRelationship] = React.useState("parent");
   const [childMode, setChildMode] = React.useState<"existing" | "new">("existing");
-  const [newChild, setNewChild] = React.useState({ firstName: "", lastName: "", dob: "", gender: "", classId: "" });
+  const [newChild, setNewChild] = React.useState({ firstName: "", lastName: "", admissionNo: "", dob: "", gender: "", classId: "" });
 
   const family = useQuery({
     queryKey: ["parent-family", parentId],
@@ -56,6 +62,10 @@ function ParentProfilePage() {
       return { parent, links: links ?? [], students: students ?? [], family: profileFamily };
     },
   });
+
+  React.useEffect(() => {
+    if (family.data?.parent.phone) setParentPhone(family.data.parent.phone);
+  }, [family.data?.parent.phone]);
 
   const availableStudents = useQuery({
     queryKey: ["students-available-for-parent", parentId],
@@ -84,17 +94,19 @@ function ParentProfilePage() {
     mutationFn: async () => {
       if (childMode === "existing") {
         if (!studentId) throw new Error("Select a student.");
-        const { data, error } = await (supabase.rpc as any)("attach_student_to_parent_family", { _parent_id: parentId, _student_id: studentId, _relationship: relationship });
+        if (!parentPhone.trim()) throw new Error("Enter the parent's phone number before linking a child.");
+        const { data, error } = await (supabase.rpc as any)("attach_student_to_parent_family", { _parent_id: parentId, _student_id: studentId, _parent_phone: parentPhone.trim(), _relationship: relationship });
         if (error) throw error;
         return data;
       }
-      if (!newChild.firstName.trim() || !newChild.lastName.trim()) throw new Error("Enter the child's first and last name.");
-      const { data, error } = await (supabase.rpc as any)("create_student_for_parent_family", { _parent_id: parentId, _first_name: newChild.firstName, _last_name: newChild.lastName, _date_of_birth: newChild.dob || null, _gender: newChild.gender || null, _class_id: newChild.classId || null, _relationship: relationship });
+      if (!newChild.firstName.trim() || !newChild.lastName.trim() || !newChild.admissionNo.trim()) throw new Error("Enter the child's first and last name, and a required admission number.");
+      if (!parentPhone.trim()) throw new Error("Enter the parent's phone number before linking a child.");
+      const { data, error } = await (supabase.rpc as any)("create_student_for_parent_family", { _parent_id: parentId, _first_name: newChild.firstName, _last_name: newChild.lastName, _date_of_birth: newChild.dob || null, _gender: newChild.gender || null, _class_id: newChild.classId || null, _admission_no: newChild.admissionNo.trim(), _parent_phone: parentPhone.trim(), _relationship: relationship });
       if (error) throw error;
       return data;
     },
-    onSuccess: (data: any) => { toast.success(childMode === "existing" ? "Child linked to the parent family." : `Child admitted with admission number ${data?.admission_no ?? "created"}.`); setAddOpen(false); setStudentId(""); setNewChild({ firstName: "", lastName: "", dob: "", gender: "", classId: "" }); qc.invalidateQueries({ queryKey: ["parent-family", parentId] }); qc.invalidateQueries({ queryKey: ["parents-directory"] }); qc.invalidateQueries({ queryKey: ["students-available-for-parent", parentId] }); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not link child."),
+    onSuccess: (data: any) => { toast.success(childMode === "existing" ? "Child linked to the parent family." : `Child admitted with admission number ${data?.admission_no ?? "created"}.`); setAddOpen(false); setStudentId(""); setNewChild({ firstName: "", lastName: "", admissionNo: "", dob: "", gender: "", classId: "" }); qc.invalidateQueries({ queryKey: ["parent-family", parentId] }); qc.invalidateQueries({ queryKey: ["parents-directory"] }); qc.invalidateQueries({ queryKey: ["students-available-for-parent", parentId] }); },
+    onError: (e) => toast.error(getChildLinkError(e)),
   });
 
   const resetPassword = useMutation({
@@ -181,7 +193,7 @@ function ParentProfilePage() {
       <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><UserRound className="size-4" />Parent information</CardTitle></CardHeader><CardContent className="space-y-3 text-sm"><Row label="Full name" value={fullName(parent)} /><Row label="Phone" value={parent.phone ?? "Not recorded"} /><Row label="Email" value={parent.email ?? "Not recorded"} /><Row label="Portal status" value={parent.is_active ? "Active" : "Disabled"} /><Row label="Account created" value={new Date(parent.created_at).toLocaleDateString("en-KE")} />{familyRecord && <><Separator /><Row label="Family status" value={familyRecord.status} /><Row label="Admission approved" value={new Date(familyRecord.approved_at).toLocaleDateString("en-KE")} /></>}</CardContent></Card>
     </div>
 
-    <Dialog open={addOpen} onOpenChange={setAddOpen}><DialogContent><DialogHeader><DialogTitle>Add another child</DialogTitle><DialogDescription>Add a new learner to {fullName(parent)} or link an existing learner. The parent keeps one portal account.</DialogDescription></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-2"><Button type="button" variant={childMode === "existing" ? "default" : "outline"} onClick={() => setChildMode("existing")}>Existing student</Button><Button type="button" variant={childMode === "new" ? "default" : "outline"} onClick={() => setChildMode("new")}>New student</Button></div>{childMode === "existing" ? <div className="space-y-2"><Label>Student</Label><Select value={studentId} onValueChange={setStudentId}><SelectTrigger><SelectValue placeholder="Select a student" /></SelectTrigger><SelectContent>{(availableStudents.data ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.first_name} {s.last_name} — {s.admission_no}</SelectItem>)}</SelectContent></Select>{availableStudents.isLoading && <p className="text-xs text-muted-foreground">Loading students…</p>}</div> : <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>First name</Label><Input value={newChild.firstName} onChange={(e) => setNewChild({ ...newChild, firstName: e.target.value })} /></div><div className="space-y-2"><Label>Last name</Label><Input value={newChild.lastName} onChange={(e) => setNewChild({ ...newChild, lastName: e.target.value })} /></div><div className="space-y-2"><Label>Date of birth</Label><Input type="date" value={newChild.dob} onChange={(e) => setNewChild({ ...newChild, dob: e.target.value })} /></div><div className="space-y-2"><Label>Gender</Label><Select value={newChild.gender} onValueChange={(v) => setNewChild({ ...newChild, gender: v })}><SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger><SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent></Select></div><div className="space-y-2 sm:col-span-2"><Label>Class</Label><Select value={newChild.classId} onValueChange={(v) => setNewChild({ ...newChild, classId: v })}><SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger><SelectContent>{(classes.data ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}{c.section ? ` — ${c.section}` : ""}</SelectItem>)}</SelectContent></Select></div></div>}<div className="space-y-2"><Label>Relationship</Label><Select value={relationship} onValueChange={setRelationship}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="parent">Parent</SelectItem><SelectItem value="guardian">Guardian</SelectItem><SelectItem value="mother">Mother</SelectItem><SelectItem value="father">Father</SelectItem><SelectItem value="sponsor">Sponsor</SelectItem></SelectContent></Select></div></div><DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button onClick={() => addChild.mutate()} disabled={addChild.isPending || (childMode === "existing" ? !studentId : !newChild.firstName || !newChild.lastName)}>{addChild.isPending ? "Saving…" : childMode === "existing" ? "Link child" : "Create & add child"}</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={addOpen} onOpenChange={setAddOpen}><DialogContent><DialogHeader><DialogTitle>Add another child</DialogTitle><DialogDescription>Add a new learner to {fullName(parent)} or link an existing learner. The parent keeps one portal account.</DialogDescription></DialogHeader><div className="space-y-4"><div className="space-y-2"><Label>Parent phone number</Label><Input required type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} placeholder="Enter parent phone number" /></div><div className="grid grid-cols-2 gap-2"><Button type="button" variant={childMode === "existing" ? "default" : "outline"} onClick={() => setChildMode("existing")}>Existing student</Button><Button type="button" variant={childMode === "new" ? "default" : "outline"} onClick={() => setChildMode("new")}>New student</Button></div>{childMode === "existing" ? <div className="space-y-2"><Label>Student</Label><Select value={studentId} onValueChange={setStudentId}><SelectTrigger><SelectValue placeholder="Select a student" /></SelectTrigger><SelectContent>{(availableStudents.data ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.first_name} {s.last_name} — {s.admission_no}</SelectItem>)}</SelectContent></Select>{availableStudents.isLoading && <p className="text-xs text-muted-foreground">Loading students…</p>}</div> : <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>First name</Label><Input value={newChild.firstName} onChange={(e) => setNewChild({ ...newChild, firstName: e.target.value })} /></div><div className="space-y-2"><Label>Last name</Label><Input value={newChild.lastName} onChange={(e) => setNewChild({ ...newChild, lastName: e.target.value })} /></div><div className="space-y-2"><Label>Admission number</Label><Input required minLength={3} value={newChild.admissionNo} onChange={(e) => setNewChild({ ...newChild, admissionNo: e.target.value })} /></div><div className="space-y-2"><Label>Date of birth</Label><Input type="date" value={newChild.dob} onChange={(e) => setNewChild({ ...newChild, dob: e.target.value })} /></div><div className="space-y-2"><Label>Gender</Label><Select value={newChild.gender} onValueChange={(v) => setNewChild({ ...newChild, gender: v })}><SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger><SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent></Select></div><div className="space-y-2 sm:col-span-2"><Label>Class</Label><Select value={newChild.classId} onValueChange={(v) => setNewChild({ ...newChild, classId: v })}><SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger><SelectContent>{(classes.data ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}{c.section ? ` — ${c.section}` : ""}</SelectItem>)}</SelectContent></Select></div></div>}<div className="space-y-2"><Label>Relationship</Label><Select value={relationship} onValueChange={setRelationship}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="parent">Parent</SelectItem><SelectItem value="guardian">Guardian</SelectItem><SelectItem value="mother">Mother</SelectItem><SelectItem value="father">Father</SelectItem><SelectItem value="sponsor">Sponsor</SelectItem></SelectContent></Select></div></div><DialogFooter><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button onClick={() => addChild.mutate()} disabled={addChild.isPending || !parentPhone.trim() || (childMode === "existing" ? !studentId : !newChild.firstName.trim() || !newChild.lastName.trim() || newChild.admissionNo.trim().length < 3)}>{addChild.isPending ? "Saving…" : childMode === "existing" ? "Link child" : "Create & add child"}</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}><DialogContent><DialogHeader><DialogTitle>Reset parent portal password</DialogTitle><DialogDescription>This updates the password for {parent.email ?? "this parent"}. Use at least 8 characters.</DialogDescription></DialogHeader><div className="space-y-2"><Label>New password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter a new password" /></div><DialogFooter><Button variant="outline" onClick={() => setPasswordOpen(false)}>Cancel</Button><Button onClick={() => resetPassword.mutate()} disabled={resetPassword.isPending}>{resetPassword.isPending ? "Updating…" : "Reset password"}</Button></DialogFooter></DialogContent></Dialog>
   </div>;
 }

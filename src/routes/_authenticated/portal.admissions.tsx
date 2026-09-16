@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
-async function getActionErrorMessage(error: unknown, fallback: string): Promise<string> {
+async function getActionErrorMessage(
+  error: unknown,
+  fallback: string,
+): Promise<string> {
   if (!error) return fallback;
 
   const e = error as any;
@@ -26,33 +29,573 @@ async function getActionErrorMessage(error: unknown, fallback: string): Promise<
   const code = e.code;
 
   const parts = [message, details, hint].filter(Boolean).join(" — ");
-  return parts ? `${fallback}: ${parts}${code ? ` (code ${code})` : ""}` : fallback;
+  return parts
+    ? `${fallback}: ${parts}${code ? ` (code ${code})` : ""}`
+    : fallback;
 }
 import { UserPlus, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, EmptyState } from "@/components/portal/page-header";
 import { supabase } from "@/integrations/supabase/client";
 import { classOptions, money } from "@/lib/school";
 
-export const Route = createFileRoute("/_authenticated/portal/admissions")({ beforeLoad:async()=>{await requirePortalRoles(["admin","headteacher"]);}, component:AdmissionsPage });
+export const Route = createFileRoute("/_authenticated/portal/admissions")({
+  beforeLoad: async () => {
+    await requirePortalRoles(["admin", "headteacher"]);
+  },
+  component: AdmissionsPage,
+});
 
-function AdmissionsPage(){
- const qc=useQueryClient(); const [q,setQ]=useState(""); const [classId,setClassId]=useState("");
- const [manual,setManual]=useState({parentFirst:"",parentLast:"",parentPhone:"",parentEmail:"",parentPassword:"",relationship:"parent",studentFirst:"",studentLast:"",dob:"",gender:"",fee:"",classId:""});
- const applications=useQuery({queryKey:["applications"],queryFn:async()=>{const {data,error}=await supabase.from("applications").select("id,application_no,parent_name,parent_phone,parent_email,child_name,child_dob,class_applying_for,status,created_at").order("created_at",{ascending:false});if(error)throw error;return data??[];}});
- const classes=useQuery({queryKey:["admission-classes"],queryFn:async()=>{const {data,error}=await supabase.from("classes").select("id,name,section,level_order").order("level_order");if(error)throw error;return data??[];}});
- const approve=useMutation({mutationFn:async(id:string)=>{if(!classId)throw new Error("Select the class to assign before approving.");const {data,error}=await (supabase.rpc as any)("approve_admission_application",{_application_id:id,_class_id:classId});if(error)throw error;return data;},onSuccess:()=>{toast.success("Application approved and learner admitted.");qc.invalidateQueries({queryKey:["applications"]});qc.invalidateQueries({queryKey:["students"]});},onError:async e=>{console.error("Admission approval failed:",e);toast.error(await getActionErrorMessage(e,"Could not approve application"))}});
- const admit=useMutation({mutationFn:async()=>{if(!manual.parentFirst||!manual.parentLast||!manual.parentPhone||!manual.parentEmail||!manual.parentPassword||!manual.studentFirst||!manual.studentLast||!manual.classId)throw new Error("Complete parent details, portal email/password, student and class details.");const {error:accountError}=await supabase.functions.invoke("create-parent-account",{body:{email:manual.parentEmail,password:manual.parentPassword,firstName:manual.parentFirst,lastName:manual.parentLast,phone:manual.parentPhone}});if(accountError)throw accountError;const {data,error}=await (supabase.rpc as any)("manual_admit_student",{_parent_first_name:manual.parentFirst,_parent_last_name:manual.parentLast,_parent_phone:manual.parentPhone,_parent_email:manual.parentEmail,_relationship:manual.relationship,_student_first_name:manual.studentFirst,_student_last_name:manual.studentLast,_date_of_birth:manual.dob||null,_gender:manual.gender||null,_class_id:manual.classId,_fee_amount:manual.fee?Number(manual.fee):0});if(error)throw error;return data;},onSuccess:(d:any)=>{toast.success(`Student admitted. Parent can now log in with ${manual.parentEmail}.`);setManual({parentFirst:"",parentLast:"",parentPhone:"",parentEmail:"",parentPassword:"",relationship:"parent",studentFirst:"",studentLast:"",dob:"",gender:"",fee:"",classId:""});qc.invalidateQueries({queryKey:["students"]});qc.invalidateQueries({queryKey:["admission-families"]});},onError:async e=>{console.error("Manual admission failed:",e);toast.error(await getActionErrorMessage(e,"Could not admit student"))}});
- const rows=(applications.data??[]).filter(a=>{const n=q.trim().toLowerCase();return !n||`${a.child_name} ${a.parent_name} ${a.application_no} ${a.parent_phone}`.toLowerCase().includes(n)});
- const createLogin=useMutation({mutationFn:async()=>{if(!manual.parentEmail||!manual.parentPassword||!manual.parentFirst||!manual.parentLast||!manual.parentPhone)throw new Error("Enter the parent name, phone, portal email and password.");const {data,error}=await supabase.functions.invoke("create-parent-account",{body:{email:manual.parentEmail,password:manual.parentPassword,firstName:manual.parentFirst,lastName:manual.parentLast,phone:manual.parentPhone}});if(error)throw error;if(data?.error)throw new Error(data.error);return data;},onSuccess:(d:any)=>{toast.success(`Parent portal login is ready: ${d.email}. ${d.linkedChildren??0} child record(s) linked.`);},onError:async e=>{console.error("Parent login creation failed:",e);toast.error(await getActionErrorMessage(e,"Could not create parent login"))}});
- return <div><PageHeader title="Admissions" description="Approve public applications or admit students and parents directly. A family may have multiple learners."/>
- <div className="mb-6 grid gap-4 md:grid-cols-3"><Stat title="Applications" value={applications.data?.length??0}/><Stat title="Pending" value={applications.data?.filter(a=>a.status!=="accepted"&&a.status!=="rejected").length??0}/><Stat title="Accepted" value={applications.data?.filter(a=>a.status==="accepted").length??0}/></div>
- <Card className="mb-6"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><UserPlus className="size-4"/>Parent portal login</CardTitle></CardHeader><CardContent className="space-y-4"><p className="text-sm text-muted-foreground">If you already admitted a parent/student without login details, use this section to create or reset the parent's portal account. Use the same parent email or phone used during admission so the existing children can be linked automatically.</p><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5"><Input placeholder="Parent first name" value={manual.parentFirst} onChange={e=>setManual({...manual,parentFirst:e.target.value})}/><Input placeholder="Parent last name" value={manual.parentLast} onChange={e=>setManual({...manual,parentLast:e.target.value})}/><Input placeholder="Parent phone" value={manual.parentPhone} onChange={e=>setManual({...manual,parentPhone:e.target.value})}/><Input type="email" placeholder="Portal email" value={manual.parentEmail} onChange={e=>setManual({...manual,parentEmail:e.target.value})}/><Input type="password" minLength={8} placeholder="New password (8+ chars)" value={manual.parentPassword} onChange={e=>setManual({...manual,parentPassword:e.target.value})}/></div><Button onClick={()=>createLogin.mutate()} disabled={createLogin.isPending}>{createLogin.isPending?"Creating login…":"Create / reset parent login"}</Button></CardContent></Card>
- <Card className="mb-6"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><UserPlus className="size-4"/>Manual parent & student admission</CardTitle></CardHeader><CardContent className="space-y-5"><p className="text-sm text-muted-foreground">Create the family, parent portal login and learner together. The parent receives an active login immediately, the child is linked automatically, the class is assigned and the first fee invoice can be created.</p><div><p className="mb-2 font-semibold">Parent / guardian</p><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><Input placeholder="First name" value={manual.parentFirst} onChange={e=>setManual({...manual,parentFirst:e.target.value})}/><Input placeholder="Last name" value={manual.parentLast} onChange={e=>setManual({...manual,parentLast:e.target.value})}/><Input placeholder="Phone" value={manual.parentPhone} onChange={e=>setManual({...manual,parentPhone:e.target.value})}/><Input type="email" placeholder="Portal email" value={manual.parentEmail} onChange={e=>setManual({...manual,parentEmail:e.target.value})}/><Input type="password" minLength={8} placeholder="Portal password (8+ chars)" value={manual.parentPassword} onChange={e=>setManual({...manual,parentPassword:e.target.value})}/></div></div><div><p className="mb-2 font-semibold">Student</p><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5"><Input placeholder="First name" value={manual.studentFirst} onChange={e=>setManual({...manual,studentFirst:e.target.value})}/><Input placeholder="Last name" value={manual.studentLast} onChange={e=>setManual({...manual,studentLast:e.target.value})}/><Input type="date" value={manual.dob} onChange={e=>setManual({...manual,dob:e.target.value})}/><Select value={manual.gender} onValueChange={v=>setManual({...manual,gender:v})}><SelectTrigger><SelectValue placeholder="Gender"/></SelectTrigger><SelectContent><SelectItem value="female">Female</SelectItem><SelectItem value="male">Male</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent></Select><Select value={manual.classId} onValueChange={v=>setManual({...manual,classId:v})}><SelectTrigger><SelectValue placeholder="Assign class"/></SelectTrigger><SelectContent>{(classes.data??[]).filter(c=>classOptions.includes(c.name)).map(c=><SelectItem key={c.id} value={c.id}>{c.name}{c.section?` — ${c.section}`:""}</SelectItem>)}</SelectContent></Select></div></div><div className="grid gap-3 md:grid-cols-3"><Input type="number" min="0" placeholder="Initial fee / invoice amount (KSh)" value={manual.fee} onChange={e=>setManual({...manual,fee:e.target.value})}/><Select value={manual.relationship} onValueChange={v=>setManual({...manual,relationship:v})}><SelectTrigger><SelectValue placeholder="Relationship"/></SelectTrigger><SelectContent><SelectItem value="parent">Parent</SelectItem><SelectItem value="guardian">Guardian</SelectItem><SelectItem value="sponsor">Sponsor</SelectItem></SelectContent></Select><Button onClick={()=>admit.mutate()} disabled={admit.isPending}>{admit.isPending?"Admitting…":"Admit student & parent"}</Button></div></CardContent></Card>
- <Card><CardHeader><CardTitle className="text-base">Public applications</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid gap-3 md:grid-cols-[1fr_18rem]"><Input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search child, parent, phone or application no."/><Select value={classId} onValueChange={setClassId}><SelectTrigger><SelectValue placeholder="Class for approval"/></SelectTrigger><SelectContent>{(classes.data??[]).filter(c=>classOptions.includes(c.name)).map(c=><SelectItem key={c.id} value={c.id}>{c.name}{c.section?` — ${c.section}`:""}</SelectItem>)}</SelectContent></Select></div>{!rows.length?<EmptyState message="No admission applications found."/>:<div className="space-y-3">{rows.map(a=><div key={a.id} className="rounded-xl border p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold text-navy">{a.child_name}</p><p className="text-sm text-muted-foreground">{a.application_no} · Applying for {a.class_applying_for}</p><p className="mt-2 text-sm">{a.photo_url && <span className="mr-2 text-primary">📷 Student photo attached</span>}Parent: <b>{a.parent_name}</b> · {a.parent_phone}{a.parent_email?` · ${a.parent_email}`:""}</p></div><Badge variant={a.status==="accepted"?"default":a.status==="rejected"?"destructive":"secondary"}>{a.status}</Badge></div>{a.status!=="accepted"&&a.status!=="rejected"&&<div className="mt-4 flex justify-end"><Button onClick={()=>approve.mutate(a.id)} disabled={approve.isPending||!classId}>{approve.isPending?"Approving…":"Approve & admit"}</Button></div>}{a.status==="accepted"&&<p className="mt-3 flex items-center gap-2 text-sm text-primary"><CheckCircle2 className="size-4"/>Admission completed</p>}</div>)}</div>}</CardContent></Card></div>
+function AdmissionsPage() {
+  const qc = useQueryClient();
+  const [q, setQ] = useState("");
+  const [classId, setClassId] = useState("");
+  const [approvalAdmissionNos, setApprovalAdmissionNos] = useState<Record<string, string>>({});
+  const [manual, setManual] = useState({
+    parentFirst: "",
+    parentLast: "",
+    parentPhone: "",
+    parentEmail: "",
+    parentPassword: "",
+    relationship: "parent",
+    studentFirst: "",
+    studentLast: "",
+    admissionNo: "",
+    dob: "",
+    gender: "",
+    fee: "",
+    classId: "",
+  });
+  const applications = useQuery({
+    queryKey: ["applications"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("applications")
+        .select(
+          "id,application_no,parent_name,parent_phone,parent_email,child_name,child_dob,class_applying_for,status,photo_url,created_at",
+        )
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const classes = useQuery({
+    queryKey: ["admission-classes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("classes")
+        .select("id,name,section,level_order")
+        .order("level_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const approve = useMutation({
+    mutationFn: async ({ id, admissionNo }: { id: string; admissionNo: string }) => {
+      if (!classId)
+        throw new Error("Select the class to assign before approving.");
+      const normalizedAdmissionNo = admissionNo.trim();
+      if (normalizedAdmissionNo.length < 3)
+        throw new Error("Enter an admission number with at least 3 characters.");
+      const { data, error } = await (supabase.rpc as any)(
+        "approve_admission_application",
+        { _application_id: id, _class_id: classId, _admission_no: normalizedAdmissionNo },
+      );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Application approved and learner admitted.");
+      qc.invalidateQueries({ queryKey: ["applications"] });
+      qc.invalidateQueries({ queryKey: ["students"] });
+    },
+    onError: async (e) => {
+      console.error("Admission approval failed:", e);
+      toast.error(
+        await getActionErrorMessage(e, "Could not approve application"),
+      );
+    },
+  });
+  const admit = useMutation({
+    mutationFn: async () => {
+      if (
+        !manual.parentFirst ||
+        !manual.parentLast ||
+        !manual.parentPhone ||
+        !manual.parentEmail ||
+        !manual.parentPassword ||
+        !manual.studentFirst ||
+        !manual.studentLast ||
+        !manual.classId ||
+        !manual.admissionNo.trim()
+      )
+        throw new Error(
+          "Complete parent details, portal email/password, student and class details, and enter a required admission number.",
+        );
+      const normalizedAdmissionNo = manual.admissionNo.trim();
+      const { error: accountError } = await supabase.functions.invoke(
+        "create-parent-account",
+        {
+          body: {
+            email: manual.parentEmail,
+            password: manual.parentPassword,
+            firstName: manual.parentFirst,
+            lastName: manual.parentLast,
+            phone: manual.parentPhone,
+          },
+        },
+      );
+      if (accountError) throw accountError;
+      const { data, error } = await (supabase.rpc as any)(
+        "manual_admit_student",
+        {
+          _parent_first_name: manual.parentFirst,
+          _parent_last_name: manual.parentLast,
+          _parent_phone: manual.parentPhone,
+          _parent_email: manual.parentEmail,
+          _relationship: manual.relationship,
+          _student_first_name: manual.studentFirst,
+          _student_last_name: manual.studentLast,
+          _date_of_birth: manual.dob || null,
+          _gender: manual.gender || null,
+          _class_id: manual.classId,
+          _admission_no: normalizedAdmissionNo,
+          _fee_amount: manual.fee ? Number(manual.fee) : 0,
+        },
+      );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (d: any) => {
+      toast.success(
+        `Student admitted. Parent can now log in with ${manual.parentEmail}.`,
+      );
+      setManual({
+        parentFirst: "",
+        parentLast: "",
+        parentPhone: "",
+        parentEmail: "",
+        parentPassword: "",
+        relationship: "parent",
+        studentFirst: "",
+        studentLast: "",
+        admissionNo: "",
+        dob: "",
+        gender: "",
+        fee: "",
+        classId: "",
+      });
+      qc.invalidateQueries({ queryKey: ["students"] });
+      qc.invalidateQueries({ queryKey: ["admission-families"] });
+    },
+    onError: async (e) => {
+      console.error("Manual admission failed:", e);
+      toast.error(await getActionErrorMessage(e, "Could not admit student"));
+    },
+  });
+  const rows = (applications.data ?? []).filter((a) => {
+    const n = q.trim().toLowerCase();
+    return (
+      !n ||
+      `${a.child_name} ${a.parent_name} ${a.application_no} ${a.parent_phone}`
+        .toLowerCase()
+        .includes(n)
+    );
+  });
+  const createLogin = useMutation({
+    mutationFn: async () => {
+      if (
+        !manual.parentEmail ||
+        !manual.parentPassword ||
+        !manual.parentFirst ||
+        !manual.parentLast ||
+        !manual.parentPhone
+      )
+        throw new Error(
+          "Enter the parent name, phone, portal email and password.",
+        );
+      const { data, error } = await supabase.functions.invoke(
+        "create-parent-account",
+        {
+          body: {
+            email: manual.parentEmail,
+            password: manual.parentPassword,
+            firstName: manual.parentFirst,
+            lastName: manual.parentLast,
+            phone: manual.parentPhone,
+          },
+        },
+      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (d: any) => {
+      toast.success(
+        `Parent portal login is ready: ${d.email}. ${d.linkedChildren ?? 0} child record(s) linked.`,
+      );
+    },
+    onError: async (e) => {
+      console.error("Parent login creation failed:", e);
+      toast.error(
+        await getActionErrorMessage(e, "Could not create parent login"),
+      );
+    },
+  });
+  return (
+    <div>
+      <PageHeader
+        title="Admissions"
+        description="Approve public applications or admit students and parents directly. A family may have multiple learners."
+      />
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <Stat title="Applications" value={applications.data?.length ?? 0} />
+        <Stat
+          title="Pending"
+          value={
+            applications.data?.filter(
+              (a) => a.status !== "accepted" && a.status !== "rejected",
+            ).length ?? 0
+          }
+        />
+        <Stat
+          title="Accepted"
+          value={
+            applications.data?.filter((a) => a.status === "accepted").length ??
+            0
+          }
+        />
+      </div>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <UserPlus className="size-4" />
+            Parent portal login
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            If you already admitted a parent/student without login details, use
+            this section to create or reset the parent's portal account. Use the
+            same parent email or phone used during admission so the existing
+            children can be linked automatically.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <Input
+              placeholder="Parent first name"
+              value={manual.parentFirst}
+              onChange={(e) =>
+                setManual({ ...manual, parentFirst: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Parent last name"
+              value={manual.parentLast}
+              onChange={(e) =>
+                setManual({ ...manual, parentLast: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Parent phone"
+              value={manual.parentPhone}
+              onChange={(e) =>
+                setManual({ ...manual, parentPhone: e.target.value })
+              }
+            />
+            <Input
+              type="email"
+              placeholder="Portal email"
+              value={manual.parentEmail}
+              onChange={(e) =>
+                setManual({ ...manual, parentEmail: e.target.value })
+              }
+            />
+            <Input
+              type="password"
+              minLength={8}
+              placeholder="New password (8+ chars)"
+              value={manual.parentPassword}
+              onChange={(e) =>
+                setManual({ ...manual, parentPassword: e.target.value })
+              }
+            />
+          </div>
+          <Button
+            onClick={() => createLogin.mutate()}
+            disabled={createLogin.isPending}
+          >
+            {createLogin.isPending
+              ? "Creating login…"
+              : "Create / reset parent login"}
+          </Button>
+        </CardContent>
+      </Card>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <UserPlus className="size-4" />
+            Manual parent & student admission
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <p className="text-sm text-muted-foreground">
+            Create the family, parent portal login and learner together. The
+            parent receives an active login immediately, the child is linked
+            automatically, the class is assigned and the first fee invoice can
+            be created.
+          </p>
+          <div>
+            <p className="mb-2 font-semibold">Parent / guardian</p>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Input
+                placeholder="First name"
+                value={manual.parentFirst}
+                onChange={(e) =>
+                  setManual({ ...manual, parentFirst: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Last name"
+                value={manual.parentLast}
+                onChange={(e) =>
+                  setManual({ ...manual, parentLast: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Phone"
+                value={manual.parentPhone}
+                onChange={(e) =>
+                  setManual({ ...manual, parentPhone: e.target.value })
+                }
+              />
+              <Input
+                type="email"
+                placeholder="Portal email"
+                value={manual.parentEmail}
+                onChange={(e) =>
+                  setManual({ ...manual, parentEmail: e.target.value })
+                }
+              />
+              <Input
+                type="password"
+                minLength={8}
+                placeholder="Portal password (8+ chars)"
+                value={manual.parentPassword}
+                onChange={(e) =>
+                  setManual({ ...manual, parentPassword: e.target.value })
+                }
+              />
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 font-semibold">Student</p>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <Input
+                placeholder="First name"
+                value={manual.studentFirst}
+                onChange={(e) =>
+                  setManual({ ...manual, studentFirst: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Last name"
+                value={manual.studentLast}
+                onChange={(e) =>
+                  setManual({ ...manual, studentLast: e.target.value })
+                }
+              />
+              <Input
+                required
+                minLength={3}
+                placeholder="Admission number"
+                value={manual.admissionNo}
+                onChange={(e) =>
+                  setManual({ ...manual, admissionNo: e.target.value })
+                }
+              />
+              <Input
+                type="date"
+                value={manual.dob}
+                onChange={(e) => setManual({ ...manual, dob: e.target.value })}
+              />
+              <Select
+                value={manual.gender}
+                onValueChange={(v) => setManual({ ...manual, gender: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={manual.classId}
+                onValueChange={(v) => setManual({ ...manual, classId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Assign class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(classes.data ?? [])
+                    .filter((c) => classOptions.includes(c.name))
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                        {c.section ? ` — ${c.section}` : ""}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <Input
+              type="number"
+              min="0"
+              placeholder="Initial fee / invoice amount (KSh)"
+              value={manual.fee}
+              onChange={(e) => setManual({ ...manual, fee: e.target.value })}
+            />
+            <Select
+              value={manual.relationship}
+              onValueChange={(v) => setManual({ ...manual, relationship: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Relationship" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="guardian">Guardian</SelectItem>
+                <SelectItem value="sponsor">Sponsor</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={() => admit.mutate()} disabled={admit.isPending}>
+              {admit.isPending ? "Admitting…" : "Admit student & parent"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Public applications</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_18rem]">
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search child, parent, phone or application no."
+            />
+            <Select value={classId} onValueChange={setClassId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Class for approval" />
+              </SelectTrigger>
+              <SelectContent>
+                {(classes.data ?? [])
+                  .filter((c) => classOptions.includes(c.name))
+                  .map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                      {c.section ? ` — ${c.section}` : ""}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {!rows.length ? (
+            <EmptyState message="No admission applications found." />
+          ) : (
+            <div className="space-y-3">
+              {rows.map((a) => (
+                <div key={a.id} className="rounded-xl border p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-navy">{a.child_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {a.application_no} · Applying for {a.class_applying_for}
+                      </p>
+                      <p className="mt-2 text-sm">
+                        {a.photo_url && (
+                          <span className="mr-2 text-primary">
+                            📷 Student photo attached
+                          </span>
+                        )}
+                        Parent: <b>{a.parent_name}</b> · {a.parent_phone}
+                        {a.parent_email ? ` · ${a.parent_email}` : ""}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
+                        a.status === "accepted"
+                          ? "default"
+                          : a.status === "rejected"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
+                      {a.status}
+                    </Badge>
+                  </div>
+                  {a.status !== "accepted" && a.status !== "rejected" && (
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+                      <div className="w-full sm:max-w-xs">
+                        <label className="mb-1 block text-sm font-medium" htmlFor={`admission-${a.id}`}>
+                          Admission number
+                        </label>
+                        <Input
+                          id={`admission-${a.id}`}
+                          required
+                          minLength={3}
+                          placeholder="Enter unique admission number"
+                          value={approvalAdmissionNos[a.id] ?? ""}
+                          onChange={(e) => setApprovalAdmissionNos((current) => ({ ...current, [a.id]: e.target.value }))}
+                        />
+                      </div>
+                      <Button
+                        onClick={() => approve.mutate({ id: a.id, admissionNo: approvalAdmissionNos[a.id] ?? "" })}
+                        disabled={approve.isPending || !classId || (approvalAdmissionNos[a.id] ?? "").trim().length < 3}
+                      >
+                        {approve.isPending ? "Approving…" : "Approve & admit"}
+                      </Button>
+                    </div>
+                  )}
+                  {a.status === "accepted" && (
+                    <p className="mt-3 flex items-center gap-2 text-sm text-primary">
+                      <CheckCircle2 className="size-4" />
+                      Admission completed
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
-function Stat({title,value}:{title:string;value:number}){return <Card><CardContent className="p-5"><p className="text-xs uppercase tracking-brand text-muted-foreground">{title}</p><p className="mt-1 text-2xl font-extrabold text-navy">{value}</p></CardContent></Card>}
+function Stat({ title, value }: { title: string; value: number }) {
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <p className="text-xs uppercase tracking-brand text-muted-foreground">
+          {title}
+        </p>
+        <p className="mt-1 text-2xl font-extrabold text-navy">{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
