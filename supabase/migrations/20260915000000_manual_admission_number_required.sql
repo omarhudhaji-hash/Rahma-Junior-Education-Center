@@ -442,3 +442,42 @@ DROP POLICY IF EXISTS "applications_public_insert" ON public.applications;
 CREATE POLICY "applications_public_insert" ON public.applications
   FOR INSERT TO anon, authenticated
   WITH CHECK (status = 'pending');
+
+-- Avoid recursive RLS evaluation when leadership loads family/student links.
+CREATE OR REPLACE FUNCTION public.can_view_family_student_link(
+  _family_id UUID,
+  _student_id UUID
+)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.is_leadership()
+    OR EXISTS (
+      SELECT 1
+      FROM public.parent_student AS ps
+      WHERE ps.parent_id = auth.uid()
+        AND ps.student_id = _student_id
+        AND EXISTS (
+          SELECT 1
+          FROM public.admission_family_students AS family_student
+          WHERE family_student.family_id = _family_id
+            AND family_student.student_id = _student_id
+        )
+    )
+$$;
+
+REVOKE ALL ON FUNCTION public.can_view_family_student_link(UUID, UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.can_view_family_student_link(UUID, UUID) TO authenticated;
+
+DROP POLICY IF EXISTS admission_family_students_scoped ON public.admission_family_students;
+DROP POLICY IF EXISTS admission_family_students_leadership ON public.admission_family_students;
+CREATE POLICY admission_family_students_scoped ON public.admission_family_students
+  FOR SELECT TO authenticated
+  USING (public.can_view_family_student_link(family_id, student_id));
+CREATE POLICY admission_family_students_leadership ON public.admission_family_students
+  FOR ALL TO authenticated
+  USING (public.is_leadership())
+  WITH CHECK (public.is_leadership());

@@ -46,21 +46,36 @@ function ParentProfilePage() {
     queryFn: async () => {
       const { data: parent, error: parentError } = await supabase.from("profiles").select("id,first_name,last_name,email,phone,is_active,created_at").eq("id", parentId).maybeSingle();
       if (parentError) throw parentError;
-      if (!parent) throw new Error("Parent account not found.");
-      const [{ data: links, error: linkError }, { data: families, error: familyError }] = await Promise.all([
-        supabase.from("parent_student").select("student_id,relationship,is_primary").eq("parent_id", parentId),
-        supabase.from("admission_families").select("id,parent_name,parent_phone,parent_email,status,approved_at,created_at").eq("status", "active"),
+      const { data: familyRecord, error: familyError } = await supabase.from("admission_families").select("id,parent_name,parent_phone,parent_email,status,approved_at,created_at").eq("id", parentId).maybeSingle();
+      if (familyError) throw familyError;
+      if (!parent && !familyRecord) throw new Error("Parent account or family not found.");
+      const [{ data: links, error: linkError }, { data: families, error: familiesError }] = await Promise.all([
+        parent
+          ? supabase.from("parent_student").select("student_id,relationship,is_primary").eq("parent_id", parentId)
+          : supabase.from("admission_family_students").select("student_id").eq("family_id", parentId),
+        parent
+          ? supabase.from("admission_families").select("id,parent_name,parent_phone,parent_email,status,approved_at,created_at").eq("status", "active")
+          : Promise.resolve({ data: [], error: null }),
       ]);
       if (linkError) throw linkError;
-      if (familyError) throw familyError;
+      if (familiesError) throw familiesError;
       const ids = (links ?? []).map((x) => x.student_id);
       const { data: students, error: studentError } = ids.length ? await supabase.from("students").select("id,admission_no,first_name,last_name,status,admission_date,current_class_id,photo_url,classes:current_class_id(name,section)").in("id", ids).order("first_name") : { data: [], error: null };
       if (studentError) throw studentError;
+      const familyParent = familyRecord ? {
+        id: familyRecord.id,
+        first_name: familyRecord.parent_name.split(/\s+/)[0] ?? "Parent",
+        last_name: familyRecord.parent_name.split(/\s+/).slice(1).join(" "),
+        email: familyRecord.parent_email,
+        phone: familyRecord.parent_phone,
+        is_active: familyRecord.status === "active",
+        created_at: familyRecord.created_at,
+      } : null;
       const profileFamily = (families ?? []).find((f) =>
-        (parent.email && f.parent_email && parent.email.toLowerCase() === f.parent_email.toLowerCase()) ||
-        (parent.phone && f.parent_phone && parent.phone === f.parent_phone)
+        (parent?.email && f.parent_email && parent.email.toLowerCase() === f.parent_email.toLowerCase()) ||
+        (parent?.phone && f.parent_phone && parent.phone === f.parent_phone)
       ) ?? null;
-      return { parent, links: links ?? [], students: students ?? [], family: profileFamily };
+      return { parent: parent ?? familyParent, links: links ?? [], students: students ?? [], family: profileFamily ?? familyRecord, isFamilyOnly: !parent };
     },
   });
 
@@ -123,6 +138,11 @@ function ParentProfilePage() {
   const toggleAccount = useMutation({
     mutationFn: async (active: boolean) => {
       if (!hasRole("admin")) throw new Error("Only the Admin can change portal account status.");
+      if (family.data?.isFamilyOnly) {
+        const { error } = await supabase.from("admission_families").update({ status: active ? "active" : "inactive" }).eq("id", parentId);
+        if (error) throw error;
+        return;
+      }
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.access_token) throw new Error("Your session has expired. Please sign in again.");
       const { error } = await supabase.functions.invoke("set-parent-account-status", {

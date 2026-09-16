@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/portal/parents")({
 
 type ParentRow = {
   id: string;
+  userId: string | null;
   first_name: string;
   last_name: string;
   email: string | null;
@@ -44,12 +45,15 @@ function ParentsPage() {
       const { data: roles, error: roleError } = await supabase.from("user_roles").select("user_id").eq("role", "parent");
       if (roleError) throw roleError;
       const ids = (roles ?? []).map((x) => x.user_id);
-      if (!ids.length) return [];
 
       const [{ data: profiles, error: profileError }, { data: links, error: linkError }, { data: families, error: familyError }] = await Promise.all([
-        supabase.from("profiles").select("id,first_name,last_name,email,phone,is_active").in("id", ids).order("first_name"),
-        supabase.from("parent_student").select("parent_id,student_id").in("parent_id", ids),
-        supabase.from("admission_families").select("id,parent_email,parent_phone,status").eq("status", "active"),
+        ids.length
+          ? supabase.from("profiles").select("id,first_name,last_name,email,phone,is_active").in("id", ids).order("first_name")
+          : Promise.resolve({ data: [], error: null }),
+        ids.length
+          ? supabase.from("parent_student").select("parent_id,student_id").in("parent_id", ids)
+          : Promise.resolve({ data: [], error: null }),
+        supabase.from("admission_families").select("id,parent_name,parent_email,parent_phone,status").eq("status", "active").order("created_at", { ascending: false }),
       ]);
       if (profileError) throw profileError;
       if (linkError) throw linkError;
@@ -66,30 +70,75 @@ function ParentsPage() {
         if (family) familyByParent.set(p.id, family.id);
       }
 
-      const studentIds = [...new Set((links ?? []).map((x) => x.student_id))];
+      const familyIds = (families ?? []).map((family) => family.id);
+      const { data: familyLinks, error: familyLinkError } = familyIds.length
+        ? await supabase.from("admission_family_students").select("family_id,student_id").in("family_id", familyIds)
+        : { data: [], error: null };
+      if (familyLinkError) throw familyLinkError;
+
+      const studentIds = [...new Set([
+        ...(links ?? []).map((x) => x.student_id),
+        ...(familyLinks ?? []).map((x) => x.student_id),
+      ])];
       const { data: students, error: studentError } = studentIds.length
         ? await supabase.from("students").select("id,first_name,last_name,admission_no").in("id", studentIds)
         : { data: [], error: null };
       if (studentError) throw studentError;
 
+      const profileRows = (profiles ?? []).map((p) => ({
+        ...p,
+        id: p.id,
+        userId: p.id,
+        childCount: countByParent.get(p.id) ?? 0,
+        familyId: familyByParent.get(p.id) ?? null,
+      }));
       const normalized = q.trim().toLowerCase();
-      return (profiles ?? []).filter((p) => {
+      const familyRows = (families ?? [])
+        .filter((family) => {
+          const linkedProfile = profileRows.find((p) => p.familyId === family.id);
+          if (linkedProfile) return false;
+          if (!normalized) return true;
+          const childIds = (familyLinks ?? []).filter((link) => link.family_id === family.id).map((link) => link.student_id);
+          const childText = (students ?? []).filter((student) => childIds.includes(student.id)).map((student) => `${student.first_name} ${student.last_name} ${student.admission_no}`).join(" ");
+          return `${family.parent_name} ${family.parent_phone} ${family.parent_email ?? ""} ${childText}`.toLowerCase().includes(normalized);
+        })
+        .map((family) => {
+          const nameParts = family.parent_name.trim().split(/\s+/);
+          return {
+            id: family.id,
+            userId: null,
+            first_name: nameParts.shift() ?? "Parent",
+            last_name: nameParts.join(" "),
+            email: family.parent_email,
+            phone: family.parent_phone,
+            is_active: true,
+            childCount: (familyLinks ?? []).filter((link) => link.family_id === family.id).length,
+            familyId: family.id,
+          };
+        });
+
+      return [
+        ...profileRows.filter((p) => {
         if (!normalized) return true;
         const own = `${p.first_name} ${p.last_name} ${p.email ?? ""} ${p.phone ?? ""}`.toLowerCase();
         const childIds = (links ?? []).filter((l) => l.parent_id === p.id).map((l) => l.student_id);
         const childText = (students ?? []).filter((s) => childIds.includes(s.id)).map((s) => `${s.first_name} ${s.last_name} ${s.admission_no}`).join(" ").toLowerCase();
         return own.includes(normalized) || childText.includes(normalized);
-      }).map((p) => ({
-        ...p,
-        childCount: countByParent.get(p.id) ?? 0,
-        familyId: familyByParent.get(p.id) ?? null,
-      }));
+        }),
+        ...familyRows,
+      ];
     },
   });
 
   const setStatus = useMutation({
-    mutationFn: async ({ userId, active }: { userId: string; active: boolean }) => {
+    mutationFn: async ({ userId, familyId, active }: { userId?: string; familyId?: string; active: boolean }) => {
       if (!hasRole("admin")) throw new Error("Only the Admin can change portal account status.");
+      if (familyId) {
+        const { error } = await supabase.from("admission_families").update({ status: active ? "active" : "inactive" }).eq("id", familyId);
+        if (error) throw error;
+        return;
+      }
+      if (!userId) throw new Error("Parent account identifier is required.");
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.access_token) throw new Error("Your session has expired. Please sign in again.");
       const { error } = await supabase.functions.invoke("set-parent-account-status", {
@@ -120,16 +169,21 @@ function ParentsPage() {
     <Card>
       <CardContent className="p-0">
         {parents.isLoading ? <p className="p-6 text-sm text-muted-foreground">Loading parent directory…</p> : parents.isError ? <EmptyState message="Unable to load the parent directory." /> : parents.data?.length ? <div className="divide-y">
-          {parents.data.map((p) => <div key={p.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-muted/30">
-            <Link to="/portal/parents/$parentId" params={{ parentId: p.id }} className="min-w-0 flex-1">
+              {parents.data.map((p) => <div key={`${p.userId ?? "family"}-${p.id}`} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-muted/30">
+            {p.userId ? <Link to="/portal/parents/$parentId" params={{ parentId: p.userId }} className="min-w-0 flex-1">
               <div className="flex items-start gap-3">
                 <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 font-semibold text-primary">{`${p.first_name?.[0] ?? ""}${p.last_name?.[0] ?? ""}`.toUpperCase()}</div>
                 <div className="min-w-0"><p className="font-semibold">{fullName(p)}</p><p className="truncate text-sm text-muted-foreground">{p.phone ?? "No phone"} · {p.email ?? "No email"}</p><div className="mt-2 flex flex-wrap items-center gap-2"><Badge variant="secondary">{p.childCount} {p.childCount === 1 ? "child" : "children"}</Badge><Badge variant={p.is_active ? "default" : "destructive"}>{p.is_active ? "Active" : "Disabled"}</Badge></div></div>
               </div>
-            </Link>
+            </Link> : <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 font-semibold text-primary">{`${p.first_name?.[0] ?? ""}${p.last_name?.[0] ?? ""}`.toUpperCase()}</div>
+                <div className="min-w-0"><p className="font-semibold">{fullName(p)}</p><p className="truncate text-sm text-muted-foreground">{p.phone ?? "No phone"} · {p.email ?? "No email"}</p><div className="mt-2 flex flex-wrap items-center gap-2"><Badge variant="secondary">{p.childCount} {p.childCount === 1 ? "child" : "children"}</Badge><Badge variant="outline">Online application</Badge></div></div>
+              </div>
+            </div>}
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild><Link to="/portal/parents/$parentId" params={{ parentId: p.id }}>View family</Link></Button>
-              {hasRole("admin") && <Button variant={p.is_active ? "outline" : "default"} size="sm" disabled={setStatus.isPending} onClick={() => setStatus.mutate({ userId: p.id, active: !p.is_active })}>{p.is_active ? <><ShieldOff className="size-4" />Disable</> : <><ShieldCheck className="size-4" />Enable</>}</Button>}
+              <Button variant="outline" size="sm" asChild><Link to="/portal/parents/$parentId" params={{ parentId: p.userId ?? p.familyId! }}>View family</Link></Button>
+              {hasRole("admin") && <Button variant={p.is_active ? "outline" : "default"} size="sm" disabled={setStatus.isPending} onClick={() => setStatus.mutate({ userId: p.userId ?? undefined, familyId: p.userId ? undefined : p.familyId ?? undefined, active: !p.is_active })}>{p.is_active ? <><ShieldOff className="size-4" />Disable</> : <><ShieldCheck className="mr-2 size-4" />Enable</>}</Button>}
             </div>
           </div>)}
         </div> : <EmptyState message="No parents found." />}
