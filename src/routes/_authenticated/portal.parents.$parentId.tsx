@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useMe } from "@/hooks/use-auth";
+import { getSupabaseFunctionError } from "@/lib/utils";
 import { toast } from "sonner";
 
 function getChildLinkError(error: unknown): string {
@@ -122,11 +123,16 @@ function ParentProfilePage() {
   const toggleAccount = useMutation({
     mutationFn: async (active: boolean) => {
       if (!hasRole("admin")) throw new Error("Only the Admin can change portal account status.");
-      const { error } = await supabase.functions.invoke("set-parent-account-status", { body: { userId: parentId, active } });
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.access_token) throw new Error("Your session has expired. Please sign in again.");
+      const { error } = await supabase.functions.invoke("set-parent-account-status", {
+        body: { userId: parentId, active },
+        headers: { Authorization: `Bearer ${session.session.access_token}` },
+      });
       if (error) throw error;
     },
     onSuccess: (_, active) => { toast.success(active ? "Portal account enabled." : "Portal account disabled."); qc.invalidateQueries({ queryKey: ["parent-family", parentId] }); qc.invalidateQueries({ queryKey: ["parents-directory"] }); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not change account status."),
+    onError: async (e) => toast.error(await getSupabaseFunctionError(e, "Could not change account status")),
   });
 
   if (family.isLoading) return <p className="text-sm text-muted-foreground">Loading parent family…</p>;

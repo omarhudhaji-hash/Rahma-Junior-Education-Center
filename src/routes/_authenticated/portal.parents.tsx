@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMe } from "@/hooks/use-auth";
+import { getSupabaseFunctionError } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/portal/parents")({
@@ -89,14 +90,19 @@ function ParentsPage() {
   const setStatus = useMutation({
     mutationFn: async ({ userId, active }: { userId: string; active: boolean }) => {
       if (!hasRole("admin")) throw new Error("Only the Admin can change portal account status.");
-      const { error } = await supabase.functions.invoke("set-parent-account-status", { body: { userId, active } });
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.access_token) throw new Error("Your session has expired. Please sign in again.");
+      const { error } = await supabase.functions.invoke("set-parent-account-status", {
+        body: { userId, active },
+        headers: { Authorization: `Bearer ${session.session.access_token}` },
+      });
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
       toast.success(vars.active ? "Parent portal account enabled." : "Parent portal account disabled.");
       qc.invalidateQueries({ queryKey: ["parents-directory"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not update account status."),
+    onError: async (e) => toast.error(await getSupabaseFunctionError(e, "Could not update account status")),
   });
 
   if (parentDetailMatch) return <Outlet />;
