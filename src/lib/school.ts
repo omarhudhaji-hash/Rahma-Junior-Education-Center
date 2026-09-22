@@ -1,5 +1,7 @@
-/** Static school details carried over from the existing Rahma site. */
-export const school = {
+import { supabase } from "@/integrations/supabase/client";
+import { setLogoUrl } from "@/lib/assets";
+
+const defaultSchool = {
   name: "Rahma Junior Education Center",
   shortName: "Rahma Junior",
   motto: "Foundation for Knowledge",
@@ -7,7 +9,52 @@ export const school = {
   phone: "+254 700 000 000",
   email: "info@rahmajunioreducation.ac.ke",
   location: "Rahma Junior Education Center",
-} as const;
+};
+
+export const school = { ...defaultSchool };
+export const SCHOOL_SETTINGS_QUERY_KEY = ["school-settings"] as const;
+
+function readString(value: unknown, fallback: string) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
+  }
+  if (value == null) return fallback;
+  return String(value);
+}
+
+export function applySchoolSettings(row?: Record<string, any> | null) {
+  const next = {
+    ...school,
+    name: readString(row?.school_name, school.name),
+    shortName: readString(row?.short_name, school.shortName),
+    motto: readString(row?.motto, school.motto),
+    phone: readString(row?.phone, school.phone),
+    email: readString(row?.email, school.email),
+    location: readString(row?.address ?? row?.location, school.location),
+  };
+
+  Object.assign(school, next);
+  setLogoUrl(row?.logo_url);
+  return { ...school };
+}
+
+export async function fetchSchoolSettings() {
+  const fallback = { ...school };
+
+  try {
+    const { data, error } = await supabase.from("school_settings").select("*").eq("id", true).maybeSingle();
+    if (error) throw error;
+
+    const fixed = applySchoolSettings(data ?? null);
+    return fixed;
+  } catch (error) {
+    console.warn("[school] using static fallback settings", error);
+    Object.assign(school, fallback);
+    setLogoUrl(undefined);
+    return { ...school };
+  }
+}
 
 export const APP_ROLES = ["admin", "headteacher", "teacher", "parent", "student"] as const;
 export type AppRole = (typeof APP_ROLES)[number];

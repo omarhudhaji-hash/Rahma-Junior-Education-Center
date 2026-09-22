@@ -1,4 +1,8 @@
-export const logoUrl = "/images/logo.jpg";
+export let logoUrl = "/images/logo.jpg";
+
+export function setLogoUrl(nextUrl: string | null | undefined) {
+  logoUrl = nextUrl && nextUrl.trim() ? nextUrl : "/images/logo.jpg";
+}
 
 export const portalPhotos = [
   "/images/gallery/photo-01.jpg",

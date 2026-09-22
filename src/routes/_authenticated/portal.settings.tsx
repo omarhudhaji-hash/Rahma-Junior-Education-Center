@@ -10,6 +10,7 @@ import {
 import { requirePortalRoles } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/use-auth";
+import { fetchSchoolSettings, SCHOOL_SETTINGS_QUERY_KEY } from "@/lib/school";
 import { PageHeader } from "@/components/portal/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,75 @@ export const Route = createFileRoute("/_authenticated/portal/settings")({
 });
 
 type Settings = Record<string, string | boolean | number | null | undefined>;
+
+const schoolSettingsColumnKeys = Object.keys({
+  school_name: "",
+  short_name: "",
+  motto: "",
+  phone: "",
+  email: "",
+  address: "",
+  county: "",
+  logo_url: "",
+  website: "",
+  registration_number: "",
+  knec_number: "",
+  principal_name: "",
+  school_type: "",
+  opening_time: "",
+  closing_time: "",
+  timezone: "",
+  date_format: "",
+  time_format: "",
+  language: "",
+  academic_year: "",
+  current_term: "",
+  term_start_date: "",
+  term_end_date: "",
+  grading_scheme: "",
+  grading_scale: "",
+  pass_mark: 0,
+  promotion_enabled: true,
+  receipt_prefix: "",
+  document_prefix: "",
+  admission_prefix: "",
+  fee_invoice_prefix: "",
+  certificate_prefix: "",
+  currency: "",
+  parent_portal_enabled: true,
+  student_portal_enabled: true,
+  online_admission_enabled: true,
+  profile_photo_required: false,
+  teacher_subject_assignment_enabled: true,
+  teacher_remarks_enabled: true,
+  attendance_alerts: true,
+  automatic_absence_alerts: true,
+  attendance_late_after_minutes: 0,
+  announcement_notifications: true,
+  exam_reminders: true,
+  fee_reminders: true,
+  sms_enabled: false,
+  fee_payment_sms: true,
+  result_sms: false,
+  birthday_notifications: false,
+  sms_sender_name: "",
+  mpesa_paybill: "",
+  mpesa_till: "",
+  mpesa_account_name: "",
+  report_card_signature_name: "",
+  report_card_signature_title: "",
+  report_card_footer: "",
+  receipt_footer: "",
+  primary_color: "",
+  secondary_color: "",
+  login_page_message: "",
+  calendar_reminders_enabled: true,
+  event_reminder_minutes: 0,
+  login_notifications: false,
+  session_timeout_minutes: 0,
+  failed_login_protection: true,
+  maintenance_mode: false,
+} satisfies Settings) as Array<keyof Settings>;
 
 const defaults: Settings = {
   school_name: "Rahma Junior Education Center", short_name: "Rahma Junior", motto: "Foundation for Knowledge",
@@ -66,11 +136,10 @@ function SettingsPage() {
   const [form, setForm] = useState<Settings>(defaults);
   const [savedSnapshot, setSavedSnapshot] = useState<Settings>(defaults);
   const query = useQuery({
-    queryKey: ["school-settings"],
+    queryKey: SCHOOL_SETTINGS_QUERY_KEY,
     queryFn: async () => {
-      const { data, error } = await supabase.from("school_settings").select("*").eq("id", true).maybeSingle();
-      if (error) throw error;
-      return { ...defaults, ...(data ?? {}) } as Settings;
+      const settings = await fetchSchoolSettings();
+      return { ...defaults, ...settings } as Settings;
     },
   });
   useEffect(() => {
@@ -122,14 +191,34 @@ function SettingsPage() {
     mutationFn: async () => {
       const validationError = validateSettings();
       if (validationError) throw new Error(validationError);
-      const payload = { ...form, id: true, updated_by: userId, updated_at: new Date().toISOString() };
-      const { error } = await supabase.from("school_settings").upsert(payload);
+
+      const payload = Object.fromEntries(
+        schoolSettingsColumnKeys.map((key) => {
+          const value = form[key];
+          if (typeof value === "string" && value.trim() === "") return [key, null];
+          return [key, value ?? null];
+        }),
+      ) as Record<string, string | boolean | number | null>;
+
+      const upsertPayload = {
+        ...payload,
+        id: true,
+        updated_by: userId ?? null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from("school_settings")
+        .upsert(upsertPayload, { onConflict: "id" });
+
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setSavedSnapshot(form);
       toast.success("School settings saved successfully");
-      qc.invalidateQueries({ queryKey: ["school-settings"] });
+      const latest = await fetchSchoolSettings();
+      qc.setQueryData(SCHOOL_SETTINGS_QUERY_KEY, { ...defaults, ...latest });
+      await qc.invalidateQueries({ queryKey: SCHOOL_SETTINGS_QUERY_KEY });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Could not save settings"),
   });

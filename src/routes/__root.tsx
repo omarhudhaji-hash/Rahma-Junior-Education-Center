@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
+import { fetchSchoolSettings, SCHOOL_SETTINGS_QUERY_KEY } from "@/lib/school";
 
 function NotFoundComponent() {
   return (
@@ -115,6 +116,19 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function SchoolSettingsSync() {
+  useQuery({
+    queryKey: SCHOOL_SETTINGS_QUERY_KEY,
+    queryFn: fetchSchoolSettings,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -122,6 +136,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <I18nProvider>
+          <SchoolSettingsSync />
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <Toaster richColors position="top-right" />
