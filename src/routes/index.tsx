@@ -147,9 +147,6 @@ function Home() {
                 attendance, share notes and enter exam marks. Parents and pupils follow results,
                 statements and school announcements — securely, on any device.
               </p>
-              <Button asChild size="lg" className="mt-7">
-                <Link to="/auth">{t("login")}</Link>
-              </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {galleryPhotos.slice(0, 4).map((g) => (
