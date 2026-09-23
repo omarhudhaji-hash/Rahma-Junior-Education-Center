@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, GraduationCap, HeartHandshake, Sparkles, Users } from "lucide-react";
+import { BookOpen, GraduationCap, HeartHandshake, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SiteFooter } from "@/components/site/site-footer";
@@ -14,16 +14,15 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Rahma Junior Education Center — Foundation for Knowledge" },
+      { title: `${school.name} — ${school.motto}` },
       {
         name: "description",
-        content:
-          "Rahma Junior Education Center offers a nurturing CBC-aligned foundation for young learners, with a parent and staff portal for results, fees and attendance.",
+        content: `${school.name} offers a nurturing CBC-aligned foundation for young learners, with a parent and staff portal for results, fees and attendance.`,
       },
-      { property: "og:title", content: "Rahma Junior Education Center" },
+      { property: "og:title", content: school.name },
       {
         property: "og:description",
-        content: "A nurturing, CBC-aligned foundation of education for young children.",
+        content: `A nurturing, CBC-aligned foundation of education for young children at ${school.name}.`,
       },
     ],
   }),
@@ -86,10 +85,7 @@ function Home() {
           </div>
 
           <div className="relative mx-auto max-w-6xl px-4 py-24 md:py-32">
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-brand text-accent">
-              <Sparkles className="size-3.5" /> {t("heroEyebrow")}
-            </p>
-            <h1 className="mt-6 max-w-2xl font-display text-4xl font-extrabold leading-tight md:text-6xl">
+            <h1 className="max-w-2xl font-display text-4xl font-extrabold leading-tight md:text-6xl">
               {t("heroTitle")}
             </h1>
             <p className="mt-5 max-w-xl text-base text-navy-foreground/85 md:text-lg">
@@ -115,7 +111,7 @@ function Home() {
         <section className="mx-auto max-w-6xl px-4 py-20">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-brand text-primary">
-              Why Rahma Junior
+              Why {school.shortName}
             </p>
             <h2 className="mt-3 font-display text-3xl font-bold text-navy md:text-4xl">
               A school built around every learner

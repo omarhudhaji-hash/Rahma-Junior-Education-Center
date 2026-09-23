@@ -8,16 +8,15 @@ import { Card, CardContent } from "@/components/ui/card";
 export const Route = createFileRoute("/academics")({
   head: () => ({
     meta: [
-      { title: "Academics & CBC — Rahma Junior Education Center" },
+      { title: `Academics & CBC — ${school.name}` },
       {
         name: "description",
-        content:
-          "Our CBC-aligned programme from playgroup through Grade 9: learning areas, assessment and how progress is shared with parents.",
+        content: `Our CBC-aligned programme from playgroup through Grade 9: learning areas, assessment and how progress is shared with parents at ${school.name}.`,
       },
-      { property: "og:title", content: "Academics & CBC — Rahma Junior" },
+      { property: "og:title", content: `Academics & CBC — ${school.shortName}` },
       {
         property: "og:description",
-        content: "Learning areas, assessment and progress reporting at Rahma Junior.",
+        content: `Learning areas, assessment and progress reporting at ${school.shortName}.`,
       },
     ],
   }),

@@ -16,13 +16,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Portal sign in — Rahma Junior Education Center" },
+      { title: `Portal sign in — ${school.name}` },
       {
         name: "description",
-        content:
-          "Sign in to the Rahma Junior Education Center portal for staff, parents and pupils.",
+        content: `Sign in to the ${school.name} portal for staff, parents and pupils.`,
       },
-      { property: "og:title", content: "Portal sign in — Rahma Junior" },
+      { property: "og:title", content: `Portal sign in — ${school.shortName}` },
       {
         property: "og:description",
         content: "Secure access to results, attendance, fees and school messages.",
@@ -204,7 +203,9 @@ function AuthPage() {
           <p className="text-xs font-semibold uppercase tracking-brand text-accent">
             {school.motto}
           </p>
-          <p className="mt-3 max-w-md font-display text-2xl font-bold">{school.values}</p>
+          <p className="mt-3 max-w-md font-display text-2xl font-bold">
+            {school.loginPageMessage || school.values}
+          </p>
         </div>
       </div>
     </div>

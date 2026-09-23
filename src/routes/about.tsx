@@ -9,13 +9,12 @@ import { school } from "@/lib/school";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About our school — Rahma Junior Education Center" },
+      { title: `About our school — ${school.name}` },
       {
         name: "description",
-        content:
-          "Learn about Rahma Junior Education Center: our mission, values and the caring team that guides every learner's foundation.",
+        content: `Learn about ${school.name}: our mission, values and the caring team that guides every learner's foundation.`,
       },
-      { property: "og:title", content: "About Rahma Junior Education Center" },
+      { property: "og:title", content: `About ${school.name}` },
       {
         property: "og:description",
         content: "Our mission, values and the team behind a strong educational foundation.",

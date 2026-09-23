@@ -9,6 +9,11 @@ const defaultSchool = {
   phone: "+254 700 000 000",
   email: "info@rahmajunioreducation.ac.ke",
   location: "Rahma Junior Education Center",
+  address: "Rahma Junior Education Center",
+  primaryColor: "#0f766e",
+  secondaryColor: "#0f172a",
+  loginPageMessage: "",
+  website: "",
 };
 
 export const school = { ...defaultSchool };
@@ -23,19 +28,43 @@ function readString(value: unknown, fallback: string) {
   return String(value);
 }
 
+function readColor(value: unknown, fallback: string) {
+  const next = typeof value === "string" ? value.trim() : "";
+  if (!next) return fallback;
+  if (/^#[0-9a-fA-F]{6}$/.test(next)) return next.toLowerCase();
+  return fallback;
+}
+
+function applyBrandColors(primary: string, secondary: string) {
+  if (typeof document === "undefined") return;
+
+  const root = document.documentElement;
+  root.style.setProperty("--primary", primary);
+  root.style.setProperty("--secondary", secondary);
+  root.style.setProperty("--navy", secondary);
+  root.style.setProperty("--accent", primary);
+}
+
 export function applySchoolSettings(row?: Record<string, any> | null) {
   const next = {
     ...school,
     name: readString(row?.school_name, school.name),
     shortName: readString(row?.short_name, school.shortName),
     motto: readString(row?.motto, school.motto),
+    values: readString(row?.values, school.values),
     phone: readString(row?.phone, school.phone),
     email: readString(row?.email, school.email),
     location: readString(row?.address ?? row?.location, school.location),
+    address: readString(row?.address ?? row?.location, school.address),
+    primaryColor: readColor(row?.primary_color, school.primaryColor),
+    secondaryColor: readColor(row?.secondary_color, school.secondaryColor),
+    loginPageMessage: readString(row?.login_page_message, school.loginPageMessage),
+    website: readString(row?.website, school.website),
   };
 
   Object.assign(school, next);
   setLogoUrl(row?.logo_url);
+  applyBrandColors(school.primaryColor, school.secondaryColor);
   return { ...school };
 }
 
@@ -52,6 +81,7 @@ export async function fetchSchoolSettings() {
     console.warn("[school] using static fallback settings", error);
     Object.assign(school, fallback);
     setLogoUrl(undefined);
+    applyBrandColors(school.primaryColor, school.secondaryColor);
     return { ...school };
   }
 }

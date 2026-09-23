@@ -289,8 +289,8 @@ function AcademicPage() {
                 <header className="border-b-2 border-slate-800 pb-5 text-center">
                   <div className="flex items-center justify-center gap-4">
                     <img
-                      src="/images/logo.jpg"
-                      alt="Rahma Junior logo"
+                      src={logoUrl}
+                      alt={`${school.name} logo`}
                       className="h-20 w-20 rounded-full object-cover"
                     />
                     <div>

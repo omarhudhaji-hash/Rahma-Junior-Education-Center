@@ -10,13 +10,12 @@ import { school } from "@/lib/school";
 export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
-      { title: "Gallery — Rahma Junior Education Center" },
+      { title: `Gallery — ${school.name}` },
       {
         name: "description",
-        content:
-          "Photos from life at Rahma Junior Education Center: classrooms, celebrations, computer lessons and community moments.",
+        content: `Photos from life at ${school.name}: classrooms, celebrations, computer lessons and community moments.`,
       },
-      { property: "og:title", content: "Gallery — Rahma Junior Education Center" },
+      { property: "og:title", content: `Gallery — ${school.name}` },
       {
         property: "og:description",
         content: "See our classrooms, celebrations and everyday school life.",

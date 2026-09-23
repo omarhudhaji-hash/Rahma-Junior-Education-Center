@@ -560,6 +560,45 @@ var Download = createLucideIcon("download", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var EyeOff = createLucideIcon("eye-off", [
+	["path", {
+		d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+		key: "ct8e1f"
+	}],
+	["path", {
+		d: "M14.084 14.158a3 3 0 0 1-4.242-4.242",
+		key: "151rxh"
+	}],
+	["path", {
+		d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+		key: "13bj9a"
+	}],
+	["path", {
+		d: "m2 2 20 20",
+		key: "1ooewy"
+	}]
+]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Eye = createLucideIcon("eye", [["path", {
+	d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+	key: "1nclc0"
+}], ["circle", {
+	cx: "12",
+	cy: "12",
+	r: "3",
+	key: "1v7zrd"
+}]]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var FilePlusCorner = createLucideIcon("file-plus-corner", [
 	["path", {
 		d: "M11.35 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5.35",
@@ -1148,32 +1187,6 @@ var Smartphone = createLucideIcon("smartphone", [["rect", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
-var Sparkles = createLucideIcon("sparkles", [
-	["path", {
-		d: "M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z",
-		key: "1s2grr"
-	}],
-	["path", {
-		d: "M20 2v4",
-		key: "1rf3ol"
-	}],
-	["path", {
-		d: "M22 4h-4",
-		key: "gwowj6"
-	}],
-	["circle", {
-		cx: "4",
-		cy: "20",
-		r: "2",
-		key: "6kqj1y"
-	}]
-]);
-/**
-* @license lucide-react v0.575.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
 var Trash2 = createLucideIcon("trash-2", [
 	["path", {
 		d: "M10 11v6",
@@ -1444,4 +1457,4 @@ var X = createLucideIcon("x", [["path", {
 	key: "d8bk6v"
 }]]);
 //#endregion
-export { ChartColumn as $, Package as A, HeartHandshake as B, Receipt as C, Phone as D, Plus as E, Mail as F, CreditCard as G, FileText as H, LogOut as I, CircleCheck as J, Clock3 as K, LayoutDashboard as L, Menu as M, Megaphone as N, Pencil as O, MapPin as P, CheckCheck as Q, KeyRound as R, RotateCcw as S, Power as T, FilePlusCorner as U, GraduationCap as V, Download as W, ChevronDown as X, ChevronUp as Y, Check as Z, ShieldCheck as _, UsersRound as a, BookOpen as at, Search as b, UserPlus as c, Award as ct, Trash2 as d, ArrowDownToLine as dt, Camera as et, Sparkles as f, Activity as ft, ShieldOff as g, ShoppingBag as h, Users as i, Building2 as it, MessageSquare as j, Palette as k, UserCog as l, ArrowUpFromLine as lt, ShoppingCart as m, Wallet as n, CalendarDays as nt, UserRound as o, BookOpenCheck as ot, Smartphone as p, ClipboardCheck as q, WalletCards as r, CalendarCheck as rt, UserRoundPlus as s, Bell as st, X as t, CalendarPlus as tt, TriangleAlert as u, ArrowLeft as ut, Settings as v, Printer as w, Save as x, Send as y, History as z };
+export { CheckCheck as $, MessageSquare as A, GraduationCap as B, Printer as C, Pencil as D, Phone as E, LogOut as F, Download as G, FilePlusCorner as H, LayoutDashboard as I, ClipboardCheck as J, CreditCard as K, KeyRound as L, Megaphone as M, MapPin as N, Palette as O, Mail as P, Check as Q, History as R, Receipt as S, Plus as T, Eye as U, FileText as V, EyeOff as W, ChevronUp as X, CircleCheck as Y, ChevronDown as Z, Settings as _, UsersRound as a, Building2 as at, Save as b, UserPlus as c, Bell as ct, Trash2 as d, ArrowLeft as dt, ChartColumn as et, Smartphone as f, ArrowDownToLine as ft, ShieldCheck as g, ShieldOff as h, Users as i, CalendarCheck as it, Menu as j, Package as k, UserCog as l, Award as lt, ShoppingBag as m, Wallet as n, CalendarPlus as nt, UserRound as o, BookOpen as ot, ShoppingCart as p, Activity as pt, Clock3 as q, WalletCards as r, CalendarDays as rt, UserRoundPlus as s, BookOpenCheck as st, X as t, Camera as tt, TriangleAlert as u, ArrowUpFromLine as ut, Send as v, Power as w, RotateCcw as x, Search as y, HeartHandshake as z };

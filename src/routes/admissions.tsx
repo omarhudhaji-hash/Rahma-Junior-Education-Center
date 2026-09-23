@@ -16,13 +16,12 @@ import { classOptions, school } from "@/lib/school";
 export const Route = createFileRoute("/admissions")({
   head: () => ({
     meta: [
-      { title: "Admissions — Rahma Junior Education Center" },
+      { title: `Admissions — ${school.name}` },
       {
         name: "description",
-        content:
-          "Apply for a place at Rahma Junior Education Center. Simple three-step admission for Playgroup through Grade 9.",
+        content: `Apply for a place at ${school.name}. Simple three-step admission for Playgroup through Grade 9.`,
       },
-      { property: "og:title", content: "Admissions at Rahma Junior Education Center" },
+      { property: "og:title", content: `Admissions at ${school.name}` },
       {
         property: "og:description",
         content: "Send an application online and our admissions team will contact you.",

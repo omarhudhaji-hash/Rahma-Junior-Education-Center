@@ -14,7 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
-import { fetchSchoolSettings, SCHOOL_SETTINGS_QUERY_KEY } from "@/lib/school";
+import { fetchSchoolSettings, SCHOOL_SETTINGS_QUERY_KEY, school } from "@/lib/school";
 
 function NotFoundComponent() {
   return (
@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "Rahma Junior Education Center" },
+      { name: "author", content: school.name },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
